@@ -16,6 +16,18 @@
     <section>
         <div class="login-box">
             <form method="POST">
+                <!-- Flash Messages Display -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div
+                    style="width: 100%; text-align: center; margin-bottom: 10px; color: white; background-color: rgba(255, 0, 0, 0.6); padding: 10px; border-radius: 10px; font-size: 0.9em;">
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
                 {{ form.hidden_tag() }}
                 <h2>KAYIT OL</h2>
                 <!-- Linked to Form Fields -->

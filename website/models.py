@@ -11,7 +11,7 @@ class Customer(db.Model, UserMixin):
     phone = db.Column(db.String(20), unique=True)
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
-    password_hash = db.Column(db.String(150))
+    password_hash = db.Column(db.String(255))
     date_joined = db.Column(db.DateTime(), default=datetime.utcnow)
 
     cart_items = db.relationship('Cart', backref=db.backref('customer', lazy=True))

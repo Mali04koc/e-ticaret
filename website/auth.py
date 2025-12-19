@@ -9,6 +9,8 @@ from flask_login import login_user, login_required, logout_user
 auth = Blueprint('auth', __name__)
 
 
+from .validators import validate_signup_data
+
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
     form = SignUpForm()
@@ -20,27 +22,29 @@ def sign_up():
         password1 = form.password1.data
         password2 = form.password2.data
 
-        if password1 == password2:
-            new_customer = Customer()
-            new_customer.email = email
-            new_customer.phone = phone
-            new_customer.first_name = first_name
-            new_customer.last_name = last_name
-            new_customer.password = password2
+        # Custom Validation
+        is_valid, error_message = validate_signup_data(email, phone, password1, password2)
+        
+        if not is_valid:
+            flash(error_message)
+            return render_template('signup.html', form=form)
 
-            try:
-                db.session.add(new_customer)
-                db.session.commit()
-                flash('Account Created Successfully, You can now Login')
-                return redirect('/login')
-            except Exception as e:
-                print(e)
-                flash('Account Not Created!!, Email or Phone already exists')
+        # If validations pass, proceed to check DB uniqueness and create user
+        new_customer = Customer()
+        new_customer.email = email
+        new_customer.phone = phone
+        new_customer.first_name = first_name
+        new_customer.last_name = last_name
+        new_customer.password = password2
 
-            # form.email.data = '' 
-            # Clearing form data is often annoying for users if submission fails; let's keep it for retry.
-        else:
-            flash('Passwords do not match!')
+        try:
+            db.session.add(new_customer)
+            db.session.commit()
+            flash('Kayıt olundu giriş yapabilirsiniz')
+            return redirect('/login')
+        except Exception as e:
+            print(e)
+            flash(f'Hata oluştu: {str(e)}')
 
     return render_template('signup.html', form=form)
 
