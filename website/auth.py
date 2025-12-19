@@ -14,14 +14,18 @@ def sign_up():
     form = SignUpForm()
     if form.validate_on_submit():
         email = form.email.data
-        username = form.username.data
+        phone = form.phone.data
+        first_name = form.first_name.data
+        last_name = form.last_name.data
         password1 = form.password1.data
         password2 = form.password2.data
 
         if password1 == password2:
             new_customer = Customer()
             new_customer.email = email
-            new_customer.username = username
+            new_customer.phone = phone
+            new_customer.first_name = first_name
+            new_customer.last_name = last_name
             new_customer.password = password2
 
             try:
@@ -31,12 +35,12 @@ def sign_up():
                 return redirect('/login')
             except Exception as e:
                 print(e)
-                flash('Account Not Created!!, Email already exists')
+                flash('Account Not Created!!, Email or Phone already exists')
 
-            form.email.data = ''
-            form.username.data = ''
-            form.password1.data = ''
-            form.password2.data = ''
+            # form.email.data = '' 
+            # Clearing form data is often annoying for users if submission fails; let's keep it for retry.
+        else:
+            flash('Passwords do not match!')
 
     return render_template('signup.html', form=form)
 
@@ -45,17 +49,18 @@ def sign_up():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        email = form.email.data
+        identifier = form.identifier.data
         password = form.password.data
 
-        customer = Customer.query.filter_by(email=email).first()
+        # Check against email OR phone
+        customer = Customer.query.filter((Customer.email == identifier) | (Customer.phone == identifier)).first()
 
         if customer:
             if customer.verify_password(password=password):
                 login_user(customer)
                 return redirect('/')
             else:
-                flash('Incorrect Email or Password')
+                flash('Incorrect Password')
 
         else:
             flash('Account does not exist please Sign Up')

@@ -1,35 +1,53 @@
-{% extends 'forms.html' %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block title %} Login {% endblock %}
+<head>
 
-{% block body %}
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- tarayıcının en güncel dökümanını kullanır -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLICK-GİRİŞ </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/giris.css') }}">
 
-<!-- Login section start -->
+</head>
 
-<section class="base" id="base-signup">
-    <div class="base-content">
-        <div class="form">
-            <h3>
-                Login to start <br> Shopping
-            </h3>
-            
-            <hr class="first">
+<body>
+
+    <section>
+        <div class="login-box">
             <form method="POST">
                 {{ form.hidden_tag() }}
-
-                <div class="email"><h4>Email Address</h4>{{ form.email }} <hr></div>
-                <div class="password"><h4>Password</h4>{{ form.password }} <hr></div>
-
-                <div class="buttons">
-                    <a href="/sign-up"> Sign Up</a>
-                    {{ form.submit() }}
+                <h2>GİRİŞ</h2>
+                <div class="input-box">
+                    <span class="icon"><ion-icon name="mail"></ion-icon></span>
+                    <!-- Backend expects identifier (email or phone) -->
+                    {{ form.identifier(placeholder="Telefon Numarası Veya Email", required=True) }}
+                    <label>Telefon Numarası Veya Email Giriniz</label>
+                </div>
+                <div class="input-box">
+                    <span class="icon"> <ion-icon name="lock-closed"></ion-icon></span>
+                    {{ form.password(placeholder="Şifre", required=True) }}
+                    <label>Şifre Giriniz</label>
                 </div>
 
-
+                <div class="remember-forget">
+                    <label><input type="checkbox" name="remember">Beni Hatırla</label>
+                    <a href="#">Şifremi Unuttum?</a> <!-- Link disabled as page does not exist -->
+                </div>
+                <button type="submit">Giriş</button>
+                <div class="register-link">
+                    <p>Hesabın Yok Mu? <a href="{{ url_for('auth.sign_up') }}">Kayıt Ol</a></p>
+                </div>
             </form>
         </div>
-    </div>
-</section>
+
+    </section>
 
 
-{% endblock %}
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+</body>
+
+
+</html>

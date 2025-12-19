@@ -4,8 +4,6 @@ from flask_login import LoginManager
 
 
 db = SQLAlchemy()
-DB_NAME = 'database.sqlite3'
-
 
 def create_database():
     db.create_all()
@@ -15,7 +13,13 @@ def create_database():
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'hbnwdvbn ajnbsjn ahe'
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
+
+    DB_USER = "root"
+    DB_PASSWORD = "mk200613"
+    DB_HOST = "localhost"
+    DB_NAME = "click_db"
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 
     db.init_app(app)
 
@@ -40,8 +44,8 @@ def create_app():
     app.register_blueprint(auth, url_prefix='/') # localhost:5000/auth/change-password
     app.register_blueprint(admin, url_prefix='/')
 
-    # with app.app_context():
-    #     create_database()
+    with app.app_context():
+        create_database()
 
     return app
 

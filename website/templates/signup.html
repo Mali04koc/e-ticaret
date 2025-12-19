@@ -1,37 +1,61 @@
-{% extends 'forms.html' %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block title %} Sign Up {% endblock %}
+<head>
 
-{% block body %}
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- tarayıcının en güncel dökümanını kullanır -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLICK-KAYIT </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/giris.css') }}">
 
-<!-- Sign Up section start -->
+</head>
 
-<section class="base" id="base-signup">
-    <div class="base-content">
-        <div class="form">
-            <h3>
-                Create an account <br> to shop
-            </h3>
-            
-            <hr class="first">
+<body>
+
+    <section>
+        <div class="login-box">
             <form method="POST">
                 {{ form.hidden_tag() }}
-
-                <div class="email"><h4>Email Address</h4>{{ form.email }} <hr> </div>
-                <div class="name"><h4>User Name</h4>{{ form.username }} <hr></div>
-                <div class="password"><h4>Password</h4>{{ form.password1 }} <hr></div>
-                <div class="password"><h4>Confirm Passowrd</h4>{{ form.password2 }} <hr></div>
-
-                <div class="buttons">
-                    <a href="/login"> Login</a>
-                    {{ form.submit() }}
+                <h2>KAYIT OL</h2>
+                <!-- Linked to Form Fields -->
+                <div class="input-box">
+                    {{ form.first_name(placeholder="Ad", required=True) }}
+                    <label>Adınızı Giriniz</label>
+                </div>
+                <div class="input-box">
+                    {{ form.last_name(placeholder="Soyad", required=True) }}
+                    <label>Soyadınızı Giriniz</label>
+                </div>
+                <div class="input-box">
+                    {{ form.phone(placeholder="Telefon Numarası", type="tel", required=True) }}
+                    <label>Telefon Numaranızı Giriniz</label>
+                </div>
+                <div class="input-box">
+                    {{ form.email(placeholder="Email", type="email", required=True) }}
+                    <label>Emailinizi Giriniz</label>
+                </div>
+                <div class="input-box">
+                    {{ form.password1(placeholder="Şifre", required=True) }}
+                    <label>Şifrenizi Giriniz</label>
+                </div>
+                <div class="input-box">
+                    {{ form.password2(placeholder="Tekrar Şifre", required=True) }}
+                    <label>Tekrar Şifrenizi Giriniz</label>
                 </div>
 
 
+                <button type="submit">Kayıt</button>
             </form>
         </div>
-    </div>
-</section>
+
+    </section>
 
 
-{% endblock %}
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+</body>
+
+
+</html>

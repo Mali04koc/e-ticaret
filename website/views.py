@@ -7,6 +7,7 @@ from intasend import APIService
 
 views = Blueprint('views', __name__)
 
+# LÜTFEN BURAYA GERÇEK INTASEND ANAHTARLARINIZI YAZINIZ
 API_PUBLISHABLE_KEY = 'YOUR_PUBLISHABLE_KEY'
 
 API_TOKEN = 'YOUR_API_TOKEN'
