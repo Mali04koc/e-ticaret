@@ -62,7 +62,7 @@ def login():
         if customer:
             if customer.verify_password(password=password):
                 login_user(customer)
-                return redirect('/')
+                return redirect('/shop')
             else:
                 flash('Incorrect Password')
 

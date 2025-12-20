@@ -14,8 +14,17 @@ API_TOKEN = 'YOUR_API_TOKEN'
 
 
 @views.route('/')
-def home():
+def landing():
+    """Public Landing Page"""
+    if current_user.is_authenticated:
+        return redirect('/shop')
+    return render_template('index.html')
 
+
+@views.route('/shop')
+@login_required
+def home():
+    """Main Shop Page (previously home)"""
     items = Product.query.filter_by(flash_sale=True)
 
     return render_template('home.html', items=items, cart=Cart.query.filter_by(customer_link=current_user.id).all()
