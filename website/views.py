@@ -1,16 +1,18 @@
 from flask import Blueprint, render_template, flash, redirect, request, jsonify
-from .models import Product, Cart, Order
+from .models import Product, Cart, Order, Address, Card
 from flask_login import login_required, current_user
 from . import db
 from intasend import APIService
+from datetime import datetime
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 views = Blueprint('views', __name__)
 
-# LÜTFEN BURAYA GERÇEK INTASEND ANAHTARLARINIZI YAZINIZ
-API_PUBLISHABLE_KEY = 'YOUR_PUBLISHABLE_KEY'
-
-API_TOKEN = 'YOUR_API_TOKEN'
+API_PUBLISHABLE_KEY = os.getenv('INTASEND_PUBLISHABLE_KEY')
+API_TOKEN = os.getenv('INTASEND_API_TOKEN')
 
 
 @views.route('/')
@@ -25,7 +27,7 @@ def landing():
 @login_required
 def home():
     """Main Shop Page (previously home)"""
-    items = Product.query.filter_by(flash_sale=True)
+    items = Product.query.filter(Product.flash_sale != None).all()
 
     return render_template('home.html', items=items, cart=Cart.query.filter_by(customer_link=current_user.id).all()
                            if current_user.is_authenticated else [])
@@ -40,11 +42,11 @@ def add_to_cart(item_id):
         try:
             item_exists.quantity = item_exists.quantity + 1
             db.session.commit()
-            flash(f' Quantity of { item_exists.product.product_name } has been updated')
+            flash(f'  { item_exists.product.product_name } miktarı güncellendi.')
             return redirect(request.referrer)
         except Exception as e:
-            print('Quantity not Updated', e)
-            flash(f'Quantity of { item_exists.product.product_name } not updated')
+            print('Miktar Güncellenmedi', e)
+            flash(f'{ item_exists.product.product_name } miktarı güncellenmedi.')
             return redirect(request.referrer)
 
     new_cart_item = Cart()
@@ -55,10 +57,10 @@ def add_to_cart(item_id):
     try:
         db.session.add(new_cart_item)
         db.session.commit()
-        flash(f'{new_cart_item.product.product_name} added to cart')
+        flash(f'{new_cart_item.product.product_name} sepete eklendi')
     except Exception as e:
-        print('Item not added to cart', e)
-        flash(f'{new_cart_item.product.product_name} has not been added to cart')
+        print('Eşya sepete eklenemedi', e)
+        flash(f'{new_cart_item.product.product_name} sepete eklenemedi')
 
     return redirect(request.referrer)
 
@@ -105,8 +107,9 @@ def minus_cart():
     if request.method == 'GET':
         cart_id = request.args.get('cart_id')
         cart_item = Cart.query.get(cart_id)
-        cart_item.quantity = cart_item.quantity - 1
-        db.session.commit()
+        if cart_item.quantity > 1:
+            cart_item.quantity = cart_item.quantity - 1
+            db.session.commit()
 
         cart = Cart.query.filter_by(customer_link=current_user.id).all()
 
@@ -195,11 +198,147 @@ def place_order():
         return redirect('/')
 
 
+@views.route('/checkout')
+@login_required
+def checkout():
+    cart = Cart.query.filter_by(customer_link=current_user.id).all()
+    if not cart:
+        flash('Sepetiniz boş. Lütfen ürün ekleyin.', category='error')
+        return redirect('/shop')
+
+    addresses = Address.query.filter_by(customer_link=current_user.id).all()
+    saved_cards = Card.query.filter_by(customer_link=current_user.id).all()
+    
+    amount = 0
+    for item in cart:
+        amount += item.product.current_price * item.quantity
+    
+    total_price = amount + 200 # Shipping cost
+    
+    return render_template('checkout.html', cart=cart, addresses=addresses, saved_cards=saved_cards, total_price=total_price)
+
+
+import random
+from flask import session
+
+@views.route('/send-email-code', methods=['POST'])
+@login_required
+def send_email_code():
+    import requests
+    
+    code = str(random.randint(100000, 999999))
+    session['email_code'] = code
+    
+    # Brevo API Config
+    url = "https://api.brevo.com/v3/smtp/email"
+    api_key = os.getenv('BREVO_API_KEY')
+    sender_email = os.getenv('BREVO_SENDER_EMAIL')
+    sender_name = os.getenv('BREVO_SENDER_NAME')
+    
+    # Payload
+    payload = {
+        "sender": {
+            "name": sender_name,
+            "email": sender_email
+        },
+        "to": [
+            {
+                "email": current_user.email,
+                "name": f"{current_user.first_name} {current_user.last_name}"
+            }
+        ],
+        "subject": "Ödeme Doğrulama Kodu",
+        "htmlContent": f"<html><body><h1>Doğrulama Kodunuz: {code}</h1><p>Bu kodu ödeme sayfasında giriniz.</p></body></html>"
+    }
+    
+    headers = {
+        "accept": "application/json",
+        "api-key": api_key,
+        "content-type": "application/json"
+    }
+    
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code == 201:
+            print(f"Email sent successfully to {current_user.email}")
+            return jsonify({'success': True, 'message': 'Email sent'})
+        else:
+            print(f"Brevo Error: {response.text}")
+            return jsonify({'success': False, 'message': 'Email sending failed'}), 500
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'success': False, 'message': 'System error'}), 500
+
+
+@views.route('/process-payment', methods=['POST'])
+@login_required
+def process_payment():
+    selected_address_id = request.form.get('selected_address')
+    saved_card_id = request.form.get('saved_card_id')
+    
+    if not selected_address_id:
+        flash('Lütfen bir teslimat adresi seçin.', category='error')
+        return redirect('/checkout')
+        
+    payment_method = "New Card"
+    
+    if saved_card_id:
+        # Saved Card Flow
+        payment_method = "Saved Card"
+        email_code = request.form.get('email_code')
+        correct_code = session.get('email_code')
+        
+        if not email_code or email_code != correct_code:
+            flash('Email Doğrulama kodu hatalı!', category='error')
+            return redirect('/checkout')
+            
+        # Clear code
+        session.pop('email_code', None)
+        
+    else:
+        # New Card Flow (Simulation)
+        card_number = request.form.get('cardNumber')
+        if not card_number: 
+            flash('Ödeme bilgileri eksik.', category='error')
+            return redirect('/checkout')
+
+    # If payment successful:
+    customer_cart = Cart.query.filter_by(customer_link=current_user.id).all()
+    
+    try:
+        payment_id = f"PAY-{current_user.id}-{int(datetime.now().timestamp())}"
+        
+        for item in customer_cart:
+            new_order = Order()
+            new_order.quantity = item.quantity
+            new_order.price = item.product.current_price
+            new_order.status = "Onaylanmayı Bekliyor"
+            new_order.payment_id = payment_id
+            new_order.product_link = item.product_link
+            new_order.customer_link = item.customer_link
+            
+            db.session.add(new_order)
+            
+            product = Product.query.get(item.product_link)
+            product.in_stock -= item.quantity
+            
+            db.session.delete(item)
+            
+        db.session.commit()
+        flash('Siparişiniz başarıyla alındı!', category='success')
+        return redirect('/orders')
+        
+    except Exception as e:
+        print(f"Order error: {e}")
+        flash('Sipariş oluşturulurken bir hata oluştu.', category='error')
+        return redirect('/checkout')
+
+
 @views.route('/orders')
 @login_required
 def order():
     orders = Order.query.filter_by(customer_link=current_user.id).all()
-    return render_template('orders.html', orders=orders)
+    return render_template('profile_templates/orders.html', orders=orders)
 
 
 @views.route('/search', methods=['GET', 'POST'])
@@ -225,3 +364,26 @@ def search():
 
 
 
+@views.route('/category/<string:name>')
+@login_required
+def get_category(name):
+    items = Product.query.filter_by(category=name).all()
+    user_cart = Cart.query.filter_by(customer_link=current_user.id).all()
+    
+    if name == 'electronics':
+        return render_template('category_template/electronics.html', items=items, cart=user_cart)
+    elif name == 'home_living':
+        return render_template('category_template/home_living.html', items=items, cart=user_cart)
+    elif name == 'fashion':
+        return render_template('category_template/fashion.html', items=items, cart=user_cart)
+    elif name == 'gaming':
+         return render_template('category_template/gaming.html', items=items, cart=user_cart)
+    elif name == 'accessories':
+         return render_template('category_template/accessories.html', items=items, cart=user_cart)
+    elif name == 'beauty':
+         return render_template('category_template/beauty.html', items=items, cart=user_cart)
+    elif name == 'sports_outdoor':
+         return render_template('category_template/sports_outdoor.html', items=items, cart=user_cart)
+    
+    # Fallback to electronics or generic if needed, or 404
+    return render_template('category_template/electronics.html', items=items, cart=user_cart)

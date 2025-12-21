@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %} Siparişlerim {% endblock %}
+
+{% block body %}
+<!-- Page Header -->
+<div class="bg-primary py-4 mb-4">
+    <div class="container">
+        <h2 class="text-white fw-bold mb-0">Hesabım</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/shop" class="text-white-50 text-decoration-none">Anasayfa</a></li>
+                <li class="breadcrumb-item"><a href="/profile/{{ current_user.id }}"
+                        class="text-white-50 text-decoration-none">Profilim</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">Siparişlerim</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container mb-5" style="min-height: 60vh;">
+    <div class="row g-4">
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="/profile/{{ current_user.id }}"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-user"></i> Profil Bilgilerim
+                        </a>
+                        <a href="/orders"
+                            class="list-group-item list-group-item-action active border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-box-open"></i> Siparişlerim
+                        </a>
+                        <a href="/address-book"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-address-book"></i> Adres Defteri
+                        </a>
+                        <a href="/saved-cards"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-credit-card"></i> Kayıtlı Kartlarım
+                        </a>
+                        <a href="/change-email"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-regular fa-envelope"></i> E-Posta Değiştir
+                        </a>
+                        <a href="/change-phone"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-phone"></i> Telefon Değiştir
+                        </a>
+                        <a href="/change-password"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-lock"></i> Şifre Değiştir
+                        </a>
+                        <a href="/logout"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3 text-danger">
+                            <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                    <h5 class="fw-bold text-primary mb-0">Sipariş Geçmişim</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if orders %}
+                    {% for item in orders %}
+                    <div class="card mb-3 border bg-light">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-2 text-center">
+                                    <img src="{{ item.product.product_picture }}" alt="{{ item.product.product_name }}"
+                                        class="img-fluid rounded shadow-sm" style="max-height: 80px;">
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold text-dark mb-1">{{ item.product.product_name }}</h6>
+                                    <div class="small text-muted mb-1">Miktar: {{ item.quantity }} adet</div>
+                                    <div class="small text-muted">Fiyat: {{ item.price }} TL</div>
+                                </div>
+                                <div class="col-md-4 mt-3 mt-md-0">
+                                    <div class="small fw-bold mb-1">Durum: <span class="text-primary">{{ item.status
+                                            }}</span></div>
+                                    <div class="progress" style="height: 6px;">
+                                        {% if item.status == 'Onaylanmayı Bekliyor' %}
+                                        <div class="progress-bar bg-secondary" role="progressbar" style="width: 20%;"
+                                            aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                                        {% elif item.status == 'Onaylandı' %}
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: 40%;"
+                                            aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+                                        {% elif item.status == 'Kargoya Verildi' %}
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 70%;"
+                                            aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"></div>
+                                        {% elif item.status == 'Teslim Edildi' %}
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%;"
+                                            aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                        {% elif item.status == 'İptal Edildi' %}
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 100%;"
+                                            aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                        {% else %}
+                                        <!-- Fallback or old statuses -->
+                                        <div class="progress-bar bg-secondary" role="progressbar" style="width: 10%;"
+                                            aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="alert alert-info border-0 d-flex align-items-center" role="alert">
+                        <i class="fa-solid fa-circle-info me-2"></i>
+                        <div>Henüz bir siparişiniz bulunmamaktadır.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

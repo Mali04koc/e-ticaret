@@ -1,15 +1,13 @@
 # kimlik doğrulama
-from flask import Blueprint, render_template, flash, redirect
-from .forms import LoginForm, SignUpForm, PasswordChangeForm
-from .models import Customer
+from flask import Blueprint, render_template, flash, redirect, request
+from .forms import LoginForm, SignUpForm, PasswordChangeForm, AddressForm, ChangeEmailForm, ChangePhoneForm
+from .models import Customer, Address, Card
 from . import db
-from flask_login import login_user, login_required, logout_user
+from flask_login import login_user, login_required, logout_user, current_user
+from .validators import validate_signup_data
 
 
 auth = Blueprint('auth', __name__)
-
-
-from .validators import validate_signup_data
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
@@ -29,6 +27,17 @@ def sign_up():
             flash(error_message)
             return render_template('signup.html', form=form)
 
+        # Check for existing user with same email or phone
+        user_by_email = Customer.query.filter_by(email=email).first()
+        if user_by_email:
+            flash('Bu email adresi ile daha önce kayıt olunmuş.', category='error')
+            return render_template('signup.html', form=form)
+        
+        user_by_phone = Customer.query.filter_by(phone=phone).first()
+        if user_by_phone:
+            flash('Bu telefon numarası ile daha önce kayıt olunmuş.', category='error')
+            return render_template('signup.html', form=form)
+
         # If validations pass, proceed to check DB uniqueness and create user
         new_customer = Customer()
         new_customer.email = email
@@ -40,11 +49,11 @@ def sign_up():
         try:
             db.session.add(new_customer)
             db.session.commit()
-            flash('Kayıt olundu giriş yapabilirsiniz')
+            flash('Kayıt olundu giriş yapabilirsiniz', category='success')
             return redirect('/login')
         except Exception as e:
             print(e)
-            flash(f'Hata oluştu: {str(e)}')
+            flash('Bir hata oluştu, lütfen tekrar deneyin.', category='error')
 
     return render_template('signup.html', form=form)
 
@@ -62,12 +71,14 @@ def login():
         if customer:
             if customer.verify_password(password=password):
                 login_user(customer)
+                if customer.id == 1:
+                    return redirect('/admin-page')
                 return redirect('/shop')
             else:
                 flash('Incorrect Password')
 
         else:
-            flash('Account does not exist please Sign Up')
+            flash('Böyle bir kullanıcı bulunamadı.Kayıt olun.')
 
     return render_template('login.html', form=form)
 
@@ -83,32 +94,159 @@ def log_out():
 @login_required
 def profile(customer_id):
     customer = Customer.query.get(customer_id)
-    return render_template('profile.html', customer=customer)
+    return render_template('profile_templates/profile.html', customer=customer)
 
 
-@auth.route('/change-password/<int:customer_id>', methods=['GET', 'POST'])
+@auth.route('/change-password', methods=['GET', 'POST'])
 @login_required
-def change_password(customer_id):
+def change_password():
     form = PasswordChangeForm()
-    customer = Customer.query.get(customer_id)
     if form.validate_on_submit():
         current_password = form.current_password.data
         new_password = form.new_password.data
         confirm_new_password = form.confirm_new_password.data
 
-        if customer.verify_password(current_password):
+        if current_user.verify_password(current_password):
             if new_password == confirm_new_password:
-                customer.password = confirm_new_password
+                current_user.password = confirm_new_password
                 db.session.commit()
-                flash('Password Updated Successfully')
-                return redirect(f'/profile/{customer.id}')
+                flash('Parola Başarıyla Güncellendi')
+                return redirect(f'/profile/{current_user.id}')
             else:
-                flash('New Passwords do not match!!')
+                flash('Yeni Parolalar Eşleşmiyor!!')
 
         else:
-            flash('Current Password is Incorrect')
+            flash('Mevcut Parola Hatalı')
 
-    return render_template('change_password.html', form=form)
+    return render_template('profile_templates/change_password.html', form=form)
+
+
+@auth.route('/change-email', methods=['GET', 'POST'])
+@login_required
+def change_email():
+    form = ChangeEmailForm()
+    if form.validate_on_submit():
+        new_email = form.new_email.data
+        password = form.password.data
+        
+        if current_user.verify_password(password):
+            existing_email = Customer.query.filter_by(email=new_email).first()
+            if existing_email:
+                flash('Bu e-posta adresi zaten kullanımda.')
+            else:
+                current_user.email = new_email
+                db.session.commit()
+                flash('E-posta adresiniz güncellendi.')
+                return redirect(f'/profile/{current_user.id}')
+        else:
+            flash('Şifre hatalı.')
+
+    return render_template('profile_templates/change_email.html', form=form)
+
+
+@auth.route('/change-phone', methods=['GET', 'POST'])
+@login_required
+def change_phone():
+    form = ChangePhoneForm()
+    if form.validate_on_submit():
+        new_phone = form.new_phone.data
+        password = form.password.data
+        
+        if current_user.verify_password(password):
+            existing_phone = Customer.query.filter_by(phone=new_phone).first()
+            if existing_phone:
+                flash('Bu telefon numarası zaten kullanımda.')
+            else:
+                current_user.phone = new_phone
+                db.session.commit()
+                flash('Telefon numaranız güncellendi.')
+                return redirect(f'/profile/{current_user.id}')
+        else:
+            flash('Şifre hatalı.')
+
+    return render_template('profile_templates/change_phone.html', form=form)
+
+
+@auth.route('/address-book', methods=['GET', 'POST'])
+@login_required
+def address_book():
+    form = AddressForm()
+    addresses = Address.query.filter_by(customer_link=current_user.id).all()
+    
+    if form.validate_on_submit():
+        new_address = Address(
+            customer_link=current_user.id,
+            address_title=form.address_title.data,
+            general_address=form.general_address.data,
+            city=form.city.data,
+            district=form.district.data,
+            zip_code=form.zip_code.data,
+            recipient_name=form.recipient_name.data,
+            phone=form.phone.data
+        )
+        try:
+            db.session.add(new_address)
+            db.session.commit()
+            flash('Yeni adres başarıyla eklendi.', category='success')
+            return redirect('/address-book')
+        except Exception as e:
+            print(e)
+            flash('Adres eklenirken bir hata oluştu.', category='error')
+            
+    return render_template('profile_templates/adres.html', form=form, addresses=addresses)
+
+
+@auth.route('/saved-cards')
+@login_required
+def saved_cards():
+    cards = Card.query.filter_by(customer_link=current_user.id).all()
+    return render_template('profile_templates/saved_cards.html', cards=cards)
+
+
+@auth.route('/add-card', methods=['POST'])
+@login_required
+def add_card():
+    card_name = request.form.get('card_name')
+    card_number = request.form.get('card_number') # 16 digits
+    expiry_date = request.form.get('expiry_date')
+    
+    # Simple validation
+    if len(card_number) < 16:
+        flash('Geçersiz kart numarası.', category='error')
+        return redirect('/saved-cards')
+        
+    masked = "**** **** **** " + card_number[-4:]
+    
+    new_card = Card(
+        customer_link=current_user.id,
+        card_name=card_name,
+        masked_number=masked,
+        expiry_date=expiry_date
+    )
+    
+    try:
+        db.session.add(new_card)
+        db.session.commit()
+        flash('Kart başarıyla kaydedildi.', category='success')
+    except Exception as e:
+        print(e)
+        flash('Kart kaydedilirken hata oluştu.', category='error')
+        
+    return redirect('/saved-cards')
+
+
+@auth.route('/delete-card/<int:id>')
+@login_required
+def delete_card(id):
+    card = Card.query.get(id)
+    if card and card.customer_link == current_user.id:
+        db.session.delete(card)
+        db.session.commit()
+        flash('Kart silindi.', category='success')
+    else:
+        flash('Kart bulunamadı veya işlem yetkiniz yok.', category='error')
+        
+    return redirect('/saved-cards')
 
 
 

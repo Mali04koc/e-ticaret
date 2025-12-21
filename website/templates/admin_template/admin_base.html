@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.min.js"></script>
+    <script src="https://kit.fontawesome.com/e24507d923.js" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <title>Wind Admin | {% block title %} {% endblock %}</title>
+</head>
+
+<body class="bg-light">
+
+    <!-- Navbar Section (Simplified for Admin) -->
+    <nav class="navbar navbar-light bg-white sticky-top shadow-sm py-3 border-bottom">
+        <div class="container-fluid px-4">
+            <!-- Logo -->
+            <a class="navbar-brand d-flex align-items-center gap-2" href="/" style="margin-right: 20px;">
+                <div class="brand-icon">
+                    <i class="fa-brands fa-wind fa-lg text-primary"></i>
+                </div>
+                <span class="brand-text fw-bold" style="color: #333; font-size: 24px;">Wind</span>
+                <span class="badge bg-primary ms-2" style="font-size: 0.7em;">ADMIN</span>
+            </a>
+
+            <!-- Right Side: Logout only -->
+            <div class="d-flex align-items-center">
+                <a href="/logout" class="btn btn-outline-danger btn-sm">
+                    <i class="fa-solid fa-right-from-bracket me-2"></i> Çıkış Yap
+                </a>
+            </div>
+        </div>
+    </nav>
+
+
+    <div class="container-fluid">
+        <div class="row min-vh-100">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block bg-white sidebar border-end collapse pt-3" id="sidebarMenu">
+                <div class="list-group list-group-flush">
+                    <a href="/admin-page"
+                        class="list-group-item list-group-item-action fw-semibold border-0 rounded my-1 {% if request.path == '/admin-page' %}active bg-primary text-white{% endif %}">
+                        <i class="fa-solid fa-gauge me-2"></i> Kontrol Paneli
+                    </a>
+
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase"
+                        style="font-size: 0.75rem;">
+                        <span>Ürün Yönetimi</span>
+                    </h6>
+                    <a href="/add-shop-items"
+                        class="list-group-item list-group-item-action border-0 rounded my-1 text-dark {% if request.path == '/add-shop-items' %}bg-light text-primary fw-bold{% endif %}">
+                        <i class="fa-solid fa-plus me-2 text-secondary"></i> Ürün Ekle
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action border-0 rounded my-1 text-dark">
+                        <i class="fa-solid fa-ranking-star me-2 text-secondary"></i> Çok Satanlar
+                    </a>
+
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase"
+                        style="font-size: 0.75rem;">
+                        <span>Satış & Müşteri</span>
+                    </h6>
+                    <a href="/view-orders"
+                        class="list-group-item list-group-item-action border-0 rounded my-1 text-dark">
+                        <i class="fa-solid fa-check-double me-2 text-secondary"></i> Sipariş Onayı
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action border-0 rounded my-1 text-dark">
+                        <i class="fa-solid fa-ticket me-2 text-secondary"></i> Kupon Tanımla
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action border-0 rounded my-1 text-dark">
+                        <i class="fa-solid fa-envelope me-2 text-secondary"></i> Mesajlar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <!-- Flash Messages -->
+                {% for message in get_flashed_messages() %}
+                <div class="alert alert-info alert-dismissible fade show shadow-sm border-0" role="alert">
+                    <i class="fa-solid fa-circle-info me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+
+                {% block body %}
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script src="{{ url_for( 'static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for( 'static', filename='js/all.min.js') }}"></script>
+    <script src="{{ url_for( 'static', filename='js/jquery.js') }}"></script>
+
+</body>
+
+</html>

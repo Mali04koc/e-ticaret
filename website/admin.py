@@ -27,14 +27,29 @@ def add_shop_items():
             current_price = form.current_price.data
             previous_price = form.previous_price.data
             in_stock = form.in_stock.data
-            flash_sale = form.flash_sale.data
+            category = form.category.data
+            
+            # Auto-calculate Flash Sale Discount
+            flash_sale = None
+            if current_price < previous_price:
+                try:
+                    discount = ((previous_price - current_price) / previous_price) * 100
+                    flash_sale = f"%{int(discount)} İndirim"
+                except ZeroDivisionError:
+                    pass
 
             file = form.product_picture.data
-
             file_name = secure_filename(file.filename)
-
-            file_path = f'./media/{file_name}'
-
+            
+            # Save to static/uploads
+            import os
+            from flask import current_app
+            
+            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder)
+                
+            file_path = os.path.join(upload_folder, file_name)
             file.save(file_path)
 
             new_shop_item = Product()
@@ -43,20 +58,22 @@ def add_shop_items():
             new_shop_item.previous_price = previous_price
             new_shop_item.in_stock = in_stock
             new_shop_item.flash_sale = flash_sale
+            new_shop_item.category = category
 
-            new_shop_item.product_picture = file_path
+            # Store web-accessible path in DB
+            new_shop_item.product_picture = f'/static/uploads/{file_name}'
 
             try:
                 db.session.add(new_shop_item)
                 db.session.commit()
-                flash(f'{product_name} added Successfully')
+                flash(f'{product_name} başarıyla eklendi')
                 print('Product Added')
-                return render_template('add_shop_items.html', form=form)
+                return render_template('admin_template/add_shop_items.html', form=form)
             except Exception as e:
                 print(e)
-                flash('Product Not Added!!')
+                flash('Ürün Eklenemedi!!')
 
-        return render_template('add_shop_items.html', form=form)
+        return render_template('admin_template/add_shop_items.html', form=form)
 
     return render_template('404.html')
 
@@ -107,12 +124,12 @@ def update_item(item_id):
                                                                 product_picture=file_path))
 
                 db.session.commit()
-                flash(f'{product_name} updated Successfully')
+                flash(f'{product_name} başarıyla güncellendi')
                 print('Product Upadted')
                 return redirect('/shop-items')
             except Exception as e:
-                print('Product not Upated', e)
-                flash('Item Not Updated!!!')
+                print('Ürün güncellenemedi', e)
+                flash('Ürün güncellenemedi!!!')
 
         return render_template('update_item.html', form=form)
     return render_template('404.html')
@@ -141,7 +158,7 @@ def delete_item(item_id):
 def order_view():
     if current_user.id == 1:
         orders = Order.query.all()
-        return render_template('view_orders.html', orders=orders)
+        return render_template('admin_template/view_orders.html', orders=orders)
     return render_template('404.html')
 
 
@@ -166,7 +183,7 @@ def update_order(order_id):
                 flash(f'Order {order_id} not updated')
                 return redirect('/view-orders')
 
-        return render_template('order_update.html', form=form)
+        return render_template('admin_template/order_update.html', form=form)
 
     return render_template('404.html')
 
@@ -184,7 +201,7 @@ def display_customers():
 @login_required
 def admin_page():
     if current_user.id == 1:
-        return render_template('admin.html')
+        return render_template('admin_template/admin_index.html')
     return render_template('404.html')
 
 

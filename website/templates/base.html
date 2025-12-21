@@ -98,9 +98,6 @@
             </li>
             <li><a class="dropdown-item" href="/profile/{{ current_user.id }}"><i
                   class="fa-solid fa-id-card me-2 text-muted"></i> Profil</a></li>
-            <li><a class="dropdown-item" href="/orders"><i class="fa-solid fa-box-open me-2 text-muted"></i>
-                Siparişlerim</a></li>
-            <li>
               <hr class="dropdown-divider">
             </li>
             <li><a class="dropdown-item text-danger" href="/logout"><i class="fa-solid fa-right-from-bracket me-2"></i>
@@ -136,13 +133,18 @@
 
 
   <!-- Footer -->
-  <footer class="mt-auto py-4 text-center" style="background-color: #232f3e; color: #ddd;">
+  <footer class="bg-dark text-white text-center py-4 mt-auto">
     <div class="container">
-      <div class="d-flex justify-content-center align-items-center gap-3 mb-2">
+      <div class="mb-2">
         <i class="fa-brands fa-wind fa-xl"></i>
-        <span class="h5 mb-0">Wind</span>
+        <span class="fs-4 fw-bold align-middle ms-2">Wind</span>
       </div>
-      <p class="small mb-0">&copy; 2025 Tüm hakları saklıdır.</p>
+      <p class="mb-1 text-white-50 small">&copy; 2025 Wind E-Ticaret A.Ş. Tüm hakları saklıdır.</p>
+      <div class="small text-white-50">
+        <a href="#" class="text-white-50 text-decoration-none me-2">Gizlilik Politikası</a>
+        &bull;
+        <a href="#" class="text-white-50 text-decoration-none ms-2">Kullanım Koşulları</a>
+      </div>
     </div>
   </footer>
 

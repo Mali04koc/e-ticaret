@@ -1,4 +1,4 @@
-$('.plus-cart').click(function(){
+$('.plus-cart').click(function () {
     console.log('Button clicked')
 
     var id = $(this).attr('pid').toString()
@@ -10,8 +10,8 @@ $('.plus-cart').click(function(){
         data: {
             cart_id: id
         },
-        
-        success: function(data){
+
+        success: function (data) {
             console.log(data)
             quantity.innerText = data.quantity
             document.getElementById(`quantity${id}`).innerText = data.quantity
@@ -23,33 +23,37 @@ $('.plus-cart').click(function(){
 })
 
 
-$('.minus-cart').click(function(){
+$('.minus-cart').click(function () {
     console.log('Button clicked')
 
     var id = $(this).attr('pid').toString()
     var quantity = this.parentNode.children[2]
 
-    $.ajax({
-        type: 'GET',
-        url: '/minuscart',
-        data: {
-            cart_id: id
-        },
-        
-        success: function(data){
-            console.log(data)
-            quantity.innerText = data.quantity
-            document.getElementById(`quantity${id}`).innerText = data.quantity
-            document.getElementById('amount_tt').innerText = data.amount
-            document.getElementById('totalamount').innerText = data.total
+    var currentQuantity = parseInt(document.getElementById(`quantity${id}`).innerText);
 
-        }
-    })
+    if (currentQuantity > 1) {
+        $.ajax({
+            type: 'GET',
+            url: '/minuscart',
+            data: {
+                cart_id: id
+            },
+
+            success: function (data) {
+                console.log(data)
+                quantity.innerText = data.quantity
+                document.getElementById(`quantity${id}`).innerText = data.quantity
+                document.getElementById('amount_tt').innerText = data.amount
+                document.getElementById('totalamount').innerText = data.total
+
+            }
+        })
+    }
 })
 
 
-$('.remove-cart').click(function(){
-    
+$('.remove-cart').click(function () {
+
     var id = $(this).attr('pid').toString()
 
     var to_remove = this.parentNode.parentNode.parentNode.parentNode
@@ -61,7 +65,7 @@ $('.remove-cart').click(function(){
             cart_id: id
         },
 
-        success: function(data){
+        success: function (data) {
             document.getElementById('amount_tt').innerText = data.amount
             document.getElementById('totalamount').innerText = data.total
             to_remove.remove()

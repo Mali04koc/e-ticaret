@@ -39,7 +39,8 @@ class Product(db.Model):
     previous_price = db.Column(db.Float, nullable=False)
     in_stock = db.Column(db.Integer, nullable=False)
     product_picture = db.Column(db.String(1000), nullable=False)
-    flash_sale = db.Column(db.Boolean, default=False)
+    flash_sale = db.Column(db.String(100)) # Stores discount percentage text e.g. "%20 İndirim"
+    category = db.Column(db.String(100)) # Stores product category
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
 
     carts = db.relationship('Cart', backref=db.backref('product', lazy=True))
@@ -76,6 +77,33 @@ class Order(db.Model):
 
     def __str__(self):
         return '<Order %r>' % self.id
+
+
+class Address(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    customer_link = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
+    
+    address_title = db.Column(db.String(100), nullable=False)
+    general_address = db.Column(db.String(300), nullable=False)
+    city = db.Column(db.String(100), nullable=False)
+    district = db.Column(db.String(100), nullable=False)
+    zip_code = db.Column(db.String(20), nullable=False)
+    recipient_name = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+
+    def __str__(self):
+        return '<Address %r>' % self.address_title
+
+
+class Card(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    customer_link = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
+    card_name = db.Column(db.String(100), nullable=False) # e.g. "My Personal Card"
+    masked_number = db.Column(db.String(20), nullable=False) # "**** **** **** 1234"
+    expiry_date = db.Column(db.String(5), nullable=False) # "12/26"
+
+    def __str__(self):
+        return '<Card %r>' % self.masked_number
 
 
 

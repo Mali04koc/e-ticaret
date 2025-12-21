@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %} Kayıtlı Kartlarım {% endblock %}
+
+{% block body %}
+<!-- Page Header -->
+<div class="bg-primary py-4 mb-4">
+    <div class="container">
+        <h2 class="text-white fw-bold mb-0">Hesabım</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/shop" class="text-white-50 text-decoration-none">Anasayfa</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">Kayıtlı Kartlarım</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container mb-5" style="min-height: 60vh;">
+    <div class="row g-4">
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="/profile/{{ current_user.id }}"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-user"></i> Profil Bilgilerim
+                        </a>
+                        <a href="/orders"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-box-open"></i> Siparişlerim
+                        </a>
+                        <a href="/address-book"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-address-book"></i> Adres Defteri
+                        </a>
+                        <a href="/saved-cards"
+                            class="list-group-item list-group-item-action active border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-credit-card"></i> Kayıtlı Kartlarım
+                        </a>
+                        <a href="/change-email"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-regular fa-envelope"></i> E-Posta Değiştir
+                        </a>
+                        <a href="/change-phone"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-phone"></i> Telefon Değiştir
+                        </a>
+                        <a href="/change-password"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-lock"></i> Şifre Değiştir
+                        </a>
+                        <a href="/logout"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3 text-danger">
+                            <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <h2 class="mb-4">Kayıtlı Kartlarım</h2>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'message' else 'info' }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                {% for card in cards %}
+                <div class="col-md-6 mb-4">
+                    <div class="card bg-light text-dark">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ card.card_name }}</h5>
+                            <p class="card-text fs-4">{{ card.masked_number }}</p>
+                            <p class="card-text text-muted">SKT: {{ card.expiry_date }}</p>
+                            <a href="/delete-card/{{ card.id }}" class="btn btn-danger btn-sm"
+                                onclick="return confirm('Bu kartı silmek istediğinize emin misiniz?')">Sil</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <hr>
+
+            <h4 class="mb-3">Yeni Kart Ekle</h4>
+            <div class="card bg-white text-dark shadow-sm">
+                <div class="card-body">
+                    <form action="/add-card" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Kart Adı (Örn: Maaş Kartım)</label>
+                            <input type="text" name="card_name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kart Numarası</label>
+                            <input type="text" name="card_number" class="form-control" placeholder="0000 0000 0000 0000"
+                                maxlength="19" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Son Kullanma Tarihi</label>
+                                <input type="text" name="expiry_date" class="form-control" placeholder="MM/YY"
+                                    maxlength="5" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Kartı Kaydet</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const expiryInput = document.querySelector('input[name="expiry_date"]');
+
+    expiryInput.addEventListener('input', function (e) {
+        let input = e.target.value.replace(/\D/g, ''); // Remove non-digits
+
+        if (input.length > 2) {
+            input = input.substring(0, 2) + '/' + input.substring(2, 4);
+        }
+
+        e.target.value = input;
+    });
+</script>
+{% endblock %}

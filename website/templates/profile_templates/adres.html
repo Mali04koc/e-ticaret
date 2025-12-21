@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %} Adres Defteri {% endblock %}
+
+{% block body %}
+<!-- Page Header -->
+<div class="bg-primary py-4 mb-4">
+    <div class="container">
+        <h2 class="text-white fw-bold mb-0">Hesabım</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/shop" class="text-white-50 text-decoration-none">Anasayfa</a></li>
+                <li class="breadcrumb-item"><a href="/profile/{{ current_user.id }}"
+                        class="text-white-50 text-decoration-none">Profilim</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">Adres Defteri</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container mb-5" style="min-height: 60vh;">
+    <div class="row g-4">
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="/profile/{{ current_user.id }}"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-user"></i> Profil Bilgilerim
+                        </a>
+                        <a href="/orders"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-box-open"></i> Siparişlerim
+                        </a>
+                        <a href="/address-book"
+                            class="list-group-item list-group-item-action active border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-address-book"></i> Adres Defteri
+                        </a>
+                        <a href="/saved-cards"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-credit-card"></i> Kayıtlı Kartlarım
+                        </a>
+                        <a href="/change-email"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-regular fa-envelope"></i> E-Posta Değiştir
+                        </a>
+                        <a href="/change-phone"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-phone"></i> Telefon Değiştir
+                        </a>
+                        <a href="/change-password"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-lock"></i> Şifre Değiştir
+                        </a>
+                        <a href="/logout"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3 text-danger">
+                            <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <!-- EXISTING ADDRESSES -->
+            <div class="card border-0 shadow-sm rounded-3 mb-4">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                    <h5 class="fw-bold text-primary mb-0">Kayıtlı Adreslerim</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if addresses %}
+                    <div class="row g-3">
+                        {% for address in addresses %}
+                        <div class="col-md-6">
+                            <div class="card h-100 border bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title fw-bold text-dark mb-2"><i
+                                            class="fa-solid fa-location-dot me-2 text-primary"></i> {{
+                                        address.address_title }}</h6>
+                                    <p class="card-text small text-muted mb-1">{{ address.recipient_name }}</p>
+                                    <p class="card-text small text-muted mb-1">{{ address.general_address }}</p>
+                                    <p class="card-text small text-muted mb-3">{{ address.district }} / {{ address.city
+                                        }} - {{ address.zip_code }}</p>
+                                    <p class="card-text small text-muted"><i class="fa-solid fa-phone me-1"></i> {{
+                                        address.phone }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info border-0 d-flex align-items-center" role="alert">
+                        <i class="fa-solid fa-circle-info me-2"></i>
+                        <div>Henüz kayıtlı bir adresiniz bulunmamaktadır.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ADD NEW ADDRESS FORM -->
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                    <h5 class="fw-bold text-success mb-0"><i class="fa-solid fa-plus me-2"></i> Yeni Adres Ekle</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Adres Başlığı (Örn: Evim)</label>
+                                {{ form.address_title(class="form-control bg-light", placeholder="Adres Başlığı") }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Teslim Alacak Kişi</label>
+                                {{ form.recipient_name(class="form-control bg-light", placeholder="Ad Soyad") }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold">Adres Detayı</label>
+                                {{ form.general_address(class="form-control bg-light", placeholder="Mahalle, Sokak, Kapı
+                                No...") }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Şehir</label>
+                                {{ form.city(class="form-control bg-light", placeholder="Şehir") }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">İlçe</label>
+                                {{ form.district(class="form-control bg-light", placeholder="İlçe") }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Posta Kodu</label>
+                                {{ form.zip_code(class="form-control bg-light", placeholder="PK") }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Telefon Numarası</label>
+                                {{ form.phone(class="form-control bg-light", placeholder="5XX XXX XX XX") }}
+                            </div>
+                            <div class="col-12 mt-4 text-end">
+                                {{ form.submit(class="btn btn-primary px-4") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %} Profilim {% endblock %}
+
+{% block body %}
+<!-- Page Header -->
+<div class="bg-primary py-4 mb-4">
+    <div class="container">
+        <h2 class="text-white fw-bold mb-0">Hesabım</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/shop" class="text-white-50 text-decoration-none">Anasayfa</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">Profilim</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container mb-5" style="min-height: 60vh;">
+    <div class="row g-4">
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="/profile/{{ customer.id }}"
+                            class="list-group-item list-group-item-action active border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-user"></i> Profil Bilgilerim
+                        </a>
+                        <a href="/orders"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-box-open"></i> Siparişlerim
+                        </a>
+                        <a href="/address-book"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-address-book"></i> Adres Defteri
+                        </a>
+                        <a href="/saved-cards"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-credit-card"></i> Kayıtlı Kartlarım
+                        </a>
+                        <a href="/change-email"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-regular fa-envelope"></i> E-Posta Değiştir
+                        </a>
+                        <a href="/change-phone"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-phone"></i> Telefon Değiştir
+                        </a>
+                        <a href="/change-password"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-lock"></i> Şifre Değiştir
+                        </a>
+                        <a href="/logout"
+                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3 text-danger">
+                            <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                    <h5 class="fw-bold text-primary mb-0">Profil Bilgileri</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Ad</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i
+                                            class="fa-solid fa-user text-muted"></i></span>
+                                    <input type="text" class="form-control bg-light border-start-0"
+                                        value="{{ customer.first_name }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Soyad</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i
+                                            class="fa-solid fa-user text-muted"></i></span>
+                                    <input type="text" class="form-control bg-light border-start-0"
+                                        value="{{ customer.last_name }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold text-uppercase">E-Posta Adresi</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i
+                                            class="fa-solid fa-envelope text-muted"></i></span>
+                                    <input type="email" class="form-control bg-light border-start-0"
+                                        value="{{ customer.email }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Telefon
+                                    Numarası</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i
+                                            class="fa-solid fa-phone text-muted"></i></span>
+                                    <input type="text" class="form-control bg-light border-start-0"
+                                        value="{{ customer.phone }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <div class="alert alert-light border d-flex align-items-center" role="alert">
+                                    <i class="fa-solid fa-circle-info text-primary me-2"></i>
+                                    <div class="small text-muted">
+                                        Bilgilerinizi güncellemek isterseniz lütfen sol menüdeki ilgili seçenekleri
+                                        kullanın veya müşteri hizmetleri ile iletişime geçin.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %} Checkout {% endblock %}
+
+{% block body %}
+<div class="container my-5" style="color: white;">
+    <h1 class="text-center mb-5">Ödeme ve Teslimat</h1>
+
+    <div class="row">
+        <!-- Sol Kolon: Adres ve Ödeme -->
+        <div class="col-md-8">
+
+            <form action="/process-payment" method="POST" id="checkout-form">
+                <!-- Adres Seçimi -->
+                <div class="card mb-4" style="color: black;">
+                    <div class="card-header">
+                        <h4>Teslimat Adresi Seçin</h4>
+                    </div>
+                    <div class="card-body">
+
+                        {% if addresses %}
+                        {% for address in addresses %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="selected_address"
+                                id="address{{ address.id }}" value="{{ address.id }}" {% if loop.first %}checked{% endif
+                                %}>
+                            <label class="form-check-label" for="address{{ address.id }}">
+                                <strong>{{ address.address_title }}</strong> - {{ address.recipient_name }} <br>
+                                {{ address.general_address }}, {{ address.district }}/{{ address.city }} <br>
+                                Tel: {{ address.phone }}
+                            </label>
+                        </div>
+                        <hr>
+                        {% endfor %}
+                        {% else %}
+                        <div class="alert alert-warning">
+                            Kayıtlı adresiniz bulunmuyor. Lütfen önce adres ekleyin.
+                        </div>
+                        {% endif %}
+
+                        <a href="/address-book" class="btn btn-outline-primary btn-sm">+ Yeni Adres Ekle</a>
+                    </div>
+                </div>
+
+                <!-- Ödeme Yöntemi Seçimi -->
+                <div class="card mb-4" style="color: black;">
+                    <div class="card-header">
+                        <h4>Ödeme Yöntemi</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="paymentTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="new-card-tab" data-bs-toggle="tab"
+                                    data-bs-target="#new-card" type="button" role="tab">Yeni Kart ile Öde</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="saved-card-tab" data-bs-toggle="tab"
+                                    data-bs-target="#saved-card" type="button" role="tab">Kayıtlı Kart ile Öde</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content mt-3" id="paymentTabContent">
+                            <!-- Yeni Kart Formu -->
+                            <div class="tab-pane fade show active" id="new-card" role="tabpanel">
+                                <div class="mb-3">
+                                    <label for="cardName" class="form-label">Kart Üzerindeki İsim</label>
+                                    <input type="text" class="form-control" id="cardName" name="cardName">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="cardNumber" class="form-label">Kart Numarası</label>
+                                    <input type="text" class="form-control" id="cardNumber" name="cardNumber"
+                                        placeholder="0000 0000 0000 0000" maxlength="19">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="expiryDate" class="form-label">Son Kullanma Tarihi</label>
+                                        <input type="text" class="form-control" id="expiryDate" name="expiryDate"
+                                            placeholder="MM/YY" maxlength="5">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="cvv" class="form-label">CVV</label>
+                                        <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123"
+                                            maxlength="3">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Kayıtlı Kart Formu -->
+                            <div class="tab-pane fade" id="saved-card" role="tabpanel">
+                                {% if saved_cards %}
+                                <div class="mb-3">
+                                    <label class="form-label">Kayıtlı Kartınız Seçin:</label>
+                                    <select class="form-select" name="saved_card_id" id="savedCardSelect">
+                                        <option value="" selected disabled>Kart Seçiniz...</option>
+                                        {% for card in saved_cards %}
+                                        <option value="{{ card.id }}">{{ card.card_name }} - {{ card.masked_number }}
+                                            ({{ card.expiry_date }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div id="email-section" style="display: none;">
+                                    <div class="alert alert-info">
+                                        Seçilen kart ile işlem yapmak için e-posta adresinize doğrulama kodu
+                                        gönderilecektir.
+                                        <br>
+                                        <button type="button" class="btn btn-warning mt-2 btn-sm"
+                                            id="sendEmailBtn">Email Kodu Gönder</button>
+                                    </div>
+
+                                    <div class="mb-3" id="verification-input" style="display: none;">
+                                        <label class="form-label">Email Doğrulama Kodu</label>
+                                        <input type="text" class="form-control" name="email_code" placeholder="123456"
+                                            maxlength="6">
+                                        <small class="text-muted">Kod e-posta adresinize gönderildi.</small>
+                                    </div>
+                                </div>
+
+                                {% else %}
+                                <div class="alert alert-warning">
+                                    Kayıtlı kartınız bulunmamaktadır. <a href="/saved-cards">Kart eklemek için
+                                        tıklayın.</a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if addresses %}
+                        <button type="submit" class="btn btn-success w-100 btn-lg mt-3">Ödemeyi Tamamla ve Siparişi
+                            Ver</button>
+                        {% else %}
+                        <button type="button" class="btn btn-secondary w-100 btn-lg mt-3" disabled>Lütfen Önce Adres
+                            Ekleyin</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+
+            <script>
+                // Simple toggle for Payment Method required fields could go here, 
+                // but validation is handled better on server side or with more complex JS.
+                // For now, we trust the user fills the visible form.
+
+                document.getElementById('savedCardSelect').addEventListener('change', function () {
+                    if (this.value) {
+                        document.getElementById('email-section').style.display = 'block';
+                    }
+                });
+
+                document.getElementById('sendEmailBtn').addEventListener('click', function () {
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.innerText = "Gönderiliyor...";
+
+                    fetch('/send-email-code', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({})
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('Doğrulama Kodu E-postanıza Gönderildi!');
+                                document.getElementById('verification-input').style.display = 'block';
+                            } else {
+                                alert('Hata: ' + data.message);
+                            }
+                            btn.disabled = false;
+                            btn.innerText = "Tekrar Gönder";
+                        })
+                        .catch((error) => {
+                            console.error('Error:', error);
+                            alert('Bir hata oluştu.');
+                            btn.disabled = false;
+                            btn.innerText = "Email Kodu Gönder";
+                        });
+                });
+            </script>
+
+        </div>
+
+        <!-- Sağ Kolon: Sepet Özeti -->
+        <div class="col-md-4">
+            <div class="card" style="color: black;">
+                <div class="card-header">
+                    <h4>Sipariş Özeti</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for item in cart %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ item.product.product_name }} (x{{ item.quantity }})
+                            <span>{{ item.product.current_price * item.quantity }} TL</span>
+                        </li>
+                        {% endfor %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Kargo
+                            <span>200.0 TL</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center fw-bold">
+                            <strong>Toplam</strong>
+                            <strong>{{ total_price }} TL</strong> <!-- Calculated in view -->
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
