@@ -188,6 +188,14 @@
                     <h4>Sipariş Özeti</h4>
                 </div>
                 <div class="card-body">
+                    <!-- Coupon Form -->
+                    <form action="/apply-coupon" method="POST" class="mb-3">
+                        <div class="input-group">
+                            <input type="text" name="code" class="form-control" placeholder="Kupon Kodu" required>
+                            <button class="btn btn-outline-secondary" type="submit">Uygula</button>
+                        </div>
+                    </form>
+
                     <ul class="list-group list-group-flush">
                         {% for item in cart %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -199,6 +207,17 @@
                             Kargo
                             <span>200.0 TL</span>
                         </li>
+
+                        {% if session.get('coupon_code') %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center text-success">
+                            Kupon İndirimi ({{ session.get('coupon_code') }})
+                            <span>-{{ session.get('discount_amount') }} TL</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="/remove-coupon" class="text-danger small text-decoration-none">Kuponu Kaldır</a>
+                        </li>
+                        {% endif %}
+
                         <li class="list-group-item d-flex justify-content-between align-items-center fw-bold">
                             <strong>Toplam</strong>
                             <strong>{{ total_price }} TL</strong> <!-- Calculated in view -->

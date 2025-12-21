@@ -15,19 +15,22 @@
 
     <section>
         <div class="login-box">
-            <form method="POST">
-                <!-- Flash Messages Display -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
+            <!-- Flash Messages (Absolute Positioned) -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div style="position: absolute; top: 10px; width: 90%; z-index: 10;">
                 {% for category, message in messages %}
                 <div
-                    style="width: 100%; text-align: center; margin-bottom: 10px; color: white; background-color: rgba(255, 0, 0, 0.6); padding: 10px; border-radius: 10px; font-size: 0.9em;">
+                    style="width: 100%; text-align: center; padding: 10px; border-radius: 10px; font-size: 0.85em; color: white; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                            background-color: {% if category == 'error' %}rgba(220, 53, 69, 0.9){% else %}rgba(25, 135, 84, 0.9){% endif %};">
                     {{ message }}
                 </div>
                 {% endfor %}
-                {% endif %}
-                {% endwith %}
+            </div>
+            {% endif %}
+            {% endwith %}
 
+            <form method="POST">
                 {{ form.hidden_tag() }}
                 <h2>GİRİŞ</h2>
                 <div class="input-box">

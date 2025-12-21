@@ -12,7 +12,8 @@ class Customer(db.Model, UserMixin):
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     password_hash = db.Column(db.String(255))
-    date_joined = db.Column(db.DateTime(), default=datetime.utcnow)
+    date_joined = db.Column(db.DateTime, default=datetime.utcnow)
+    is_banned = db.Column(db.Boolean, default=False)
 
     cart_items = db.relationship('Cart', backref=db.backref('customer', lazy=True))
     orders = db.relationship('Order', backref=db.backref('customer', lazy=True))
@@ -104,6 +105,18 @@ class Card(db.Model):
 
     def __str__(self):
         return '<Card %r>' % self.masked_number
+
+
+class Coupon(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(50), unique=True, nullable=False)
+    discount_value = db.Column(db.Float, nullable=False)
+    is_percentage = db.Column(db.Boolean, default=False)
+    target_customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=True) # Null = Global
+    is_active = db.Column(db.Boolean, default=True)
+
+    def __str__(self):
+        return '<Coupon %r>' % self.code
 
 
 

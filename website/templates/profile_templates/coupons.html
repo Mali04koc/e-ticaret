@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %} Kuponlarım {% endblock %}
+
+{% block body %}
+<!-- Page Header -->
+<div class="bg-primary py-4 mb-4">
+    <div class="container">
+        <h2 class="text-white fw-bold mb-0">Hesabım</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/shop" class="text-white-50 text-decoration-none">Anasayfa</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">Kuponlarım</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container mb-5" style="min-height: 60vh;">
+    <div class="row g-4">
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            {% include 'includes/profile_sidebar.html' %}
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                    <h5 class="fw-bold text-primary mb-0">Kuponlarım</h5>
+                </div>
+                <div class="card-body p-4">
+
+                    {% if coupons %}
+                    <div class="row g-3">
+                        {% for coupon in coupons %}
+                        <div class="col-md-6 text-black">
+                            <div class="coupon-card p-3 rounded-3 position-relative"
+                                style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 1px dashed #aaa;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fa-solid fa-gift"></i>
+                                        {% if coupon.is_percentage %} %{{ coupon.discount_value|int }} İndirim {% else
+                                        %} {{ coupon.discount_value }} TL İndirim {% endif %}
+                                    </span>
+                                    {% if coupon.target_customer_id %}
+                                    <span class="badge bg-info text-white" style="font-size: 0.7em;">Size Özel</span>
+                                    {% endif %}
+                                </div>
+                                <h4 class="fw-bold text-dark mb-1" id="code-{{coupon.id}}">{{ coupon.code }}</h4>
+                                <p class="text-muted small mb-3">Ödeme sayfasında bu kodu kullanabilirsiniz.</p>
+
+                                <button class="btn btn-outline-primary btn-sm w-100"
+                                    onclick="copyCode('{{ coupon.code }}')">
+                                    <i class="fa-regular fa-copy"></i> Kodu Kopyala
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-ticket fa-3x mb-3 text-secondary"></i>
+                        <p class="mb-0">Şu anda tanımlı kuponunuz bulunmamaktadır.</p>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function copyCode(code) {
+        navigator.clipboard.writeText(code).then(function () {
+            alert('Kupon kodu kopyalandı: ' + code);
+        }, function (err) {
+            console.error('Async: Could not copy text: ', err);
+        });
+    }
+</script>
+
+{% endblock %}

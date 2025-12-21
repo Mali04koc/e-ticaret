@@ -1,0 +1,70 @@
+{% extends 'admin_template/admin_base.html' %}
+
+{% block title %} Kuponları Yönet {% endblock %}
+
+{% block body %}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Kupon Yönetimi</h1>
+    <a href="/define-coupon" class="btn btn-primary">
+        <i class="fa-solid fa-plus me-2"></i> Yeni Kupon Tanımla
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Kupon Kodu</th>
+                        <th scope="col">İndirim</th>
+                        <th scope="col">Hedef</th>
+                        <th scope="col">Durum</th>
+                        <th scope="col">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for coupon in coupons %}
+                    <tr>
+                        <td class="fw-bold text-primary">{{ coupon.code }}</td>
+                        <td>
+                            {% if coupon.is_percentage %}
+                            %{{ coupon.discount_value|int }}
+                            {% else %}
+                            {{ coupon.discount_value }} TL
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if coupon.target_customer_id %}
+                            <span class="badge bg-info text-dark">Özel (User ID: {{ coupon.target_customer_id }})</span>
+                            {% else %}
+                            <span class="badge bg-success">Herkese Açık (Global)</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if coupon.is_active %}
+                            <span class="text-success"><i class="fa-solid fa-check-circle"></i> Aktif</span>
+                            {% else %}
+                            <span class="text-danger">Pasif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/delete-coupon/{{ coupon.id }}" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Bu kuponu silmek istediğinize emin misiniz?');">
+                                <i class="fa-solid fa-trash"></i> Sil
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Henüz hiç kupon oluşturulmamış.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

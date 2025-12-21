@@ -1,0 +1,54 @@
+{% extends 'admin_template/admin_base.html' %}
+
+{% block title %} Kupon Tanımla {% endblock %}
+
+{% block body %}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-primary">Yeni Kupon Oluştur</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small">
+                    <i class="fa-solid fa-circle-info me-2"></i>
+                    <strong>Yüzde İndirim:</strong> Kodun içine <code>%</code> koyun. (Örn: <code>SUMMER%20</code> ->
+                    %20 İndirim)<br>
+                    <strong>TL İndirim:</strong> Sadece sayı kullanın. (Örn: <code>WELCOME50</code> -> 50 TL İndirim)
+                </div>
+
+                <form action="/define-coupon" method="POST">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kupon Kodu</label>
+                        <input type="text" name="code" class="form-control" placeholder="Örn: YAZ%10 veya HOSGELDIN50"
+                            required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Hedef Kullanıcı</label>
+                        <select name="target_customer" class="form-select">
+                            <option value="all" {% if not selected %}selected{% endif %}>Herkese Açık (Global)</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.id }}" {% if selected and selected|int==customer.id %}selected{%
+                                endif %}>
+                                {{ customer.first_name }} {{ customer.last_name }} ({{ customer.email }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-tags me-2"></i> Kuponu Oluştur
+                        </button>
+                        <a href="/manage-coupons" class="btn btn-outline-secondary">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

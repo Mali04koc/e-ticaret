@@ -1,10 +1,11 @@
 # kimlik doğrulama
 from flask import Blueprint, render_template, flash, redirect, request
 from .forms import LoginForm, SignUpForm, PasswordChangeForm, AddressForm, ChangeEmailForm, ChangePhoneForm
-from .models import Customer, Address, Card
+from .models import Customer, Address, Card, Coupon
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 from .validators import validate_signup_data
+from sqlalchemy import or_
 
 
 auth = Blueprint('auth', __name__)
@@ -70,15 +71,19 @@ def login():
 
         if customer:
             if customer.verify_password(password=password):
+                if customer.is_banned:
+                    flash('Hesabınız erişime kapatılmıştır. Yönetici ile iletişime geçin.', category='error')
+                    return render_template('login.html', form=form)
+                
                 login_user(customer)
                 if customer.id == 1:
                     return redirect('/admin-page')
                 return redirect('/shop')
             else:
-                flash('Incorrect Password')
+                flash('Incorrect Password', category='error')
 
         else:
-            flash('Böyle bir kullanıcı bulunamadı.Kayıt olun.')
+            flash('Böyle bir kullanıcı bulunamadı.Kayıt olun.', category='error')
 
     return render_template('login.html', form=form)
 
@@ -194,6 +199,20 @@ def address_book():
             flash('Adres eklenirken bir hata oluştu.', category='error')
             
     return render_template('profile_templates/adres.html', form=form, addresses=addresses)
+
+
+@auth.route('/my-coupons')
+@login_required
+def my_coupons():
+    # Global coupons OR Private coupons for this user
+    coupons = Coupon.query.filter(
+        or_(
+            Coupon.target_customer_id == None, 
+            Coupon.target_customer_id == current_user.id
+        ),
+        Coupon.is_active == True
+    ).all()
+    return render_template('profile_templates/coupons.html', coupons=coupons)
 
 
 @auth.route('/saved-cards')

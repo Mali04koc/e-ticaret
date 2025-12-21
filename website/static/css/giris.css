@@ -16,15 +16,8 @@ section {
     background: url('/media/click_logo.png') no-repeat;
     background-size: cover;
     background-position: center;
-    animation: animateBg 5s linear infinite;
-}
-
-@keyframes animateBg {
-
-    100% {
-        filter: hue-rotate(360deg);
-    }
-
+    background-size: cover;
+    background-position: center;
 }
 
 .login-box {

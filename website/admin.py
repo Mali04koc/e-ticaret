@@ -1,11 +1,12 @@
 # websitemizin admin sayfasıyla ilgilenecek
 
-from flask import Blueprint, render_template, flash, send_from_directory, redirect
+from flask import Blueprint, render_template, flash, send_from_directory, redirect, request
 from flask_login import login_required, current_user
 from .forms import ShopItemsForm, OrderForm
 from werkzeug.utils import secure_filename
-from .models import Product, Order, Customer
+from .models import Product, Order, Customer, Coupon
 from . import db
+import os
 
 
 admin = Blueprint('admin', __name__)
@@ -14,6 +15,113 @@ admin = Blueprint('admin', __name__)
 @admin.route('/media/<path:filename>')
 def get_image(filename):
     return send_from_directory('../media', filename)
+
+
+@admin.route('/view-customers')
+@login_required
+def view_customers():
+    if current_user.id == 1:
+        customers = Customer.query.filter(Customer.id != 1).all() # Exclude admin
+        return render_template('admin_template/view_customers.html', customers=customers)
+    return render_template('404.html')
+
+
+@admin.route('/toggle-ban/<int:customer_id>')
+@login_required
+def toggle_ban(customer_id):
+    if current_user.id == 1:
+        customer = Customer.query.get(customer_id)
+        if customer:
+            customer.is_banned = not customer.is_banned
+            db.session.commit()
+            status = "yasaklandı" if customer.is_banned else "erişime açıldı"
+            flash(f'Kullanıcı {status}.')
+        return redirect('/view-customers')
+    return render_template('404.html')
+
+
+@admin.route('/manage-coupons')
+@login_required
+def manage_coupons():
+    if current_user.id == 1:
+        coupons = Coupon.query.all()
+        return render_template('admin_template/manage_coupons.html', coupons=coupons)
+    return render_template('404.html')
+
+
+@admin.route('/define-coupon', methods=['GET', 'POST'])
+@login_required
+def define_coupon():
+    if current_user.id != 1:
+        return render_template('404.html')
+
+    customers = Customer.query.filter(Customer.id != 1).all()
+    
+    if request.method == 'POST':
+        code_input = request.form.get('code') # e.g. SUMMER%10 or WELCOME50
+        target_id = request.form.get('target_customer') # 'all' or ID
+        
+        if not code_input:
+            flash('Kupon kodu giriniz.', category='error')
+            return redirect('/define-coupon')
+            
+        # Parse Logic
+        is_percentage = False
+        discount_val = 0.0
+        
+        try:
+            if '%' in code_input:
+                is_percentage = True
+                # Expecting TEXT%NUMBER e.g. SUMMER%20
+                parts = code_input.split('%')
+                discount_val = float(parts[-1])
+            else:
+                is_percentage = False
+                # Expecting TEXTNUMBER e.g. WELCOME50
+                # We need to extract the number from the end
+                import re
+                match = re.search(r'(\d+)$', code_input)
+                if match:
+                    discount_val = float(match.group(1))
+                else:
+                    flash('Kupon kodunda indirim miktarı bulunamadı (Örn: SUMMER%20 veya WELCOME50)', category='error')
+                    return redirect('/define-coupon')
+        except ValueError:
+            flash('Geçersiz indirim formatı.', category='error')
+            return redirect('/define-coupon')
+
+        # Create Coupon
+        new_coupon = Coupon(
+            code=code_input,
+            discount_value=discount_val,
+            is_percentage=is_percentage,
+            target_customer_id = int(target_id) if target_id and target_id != 'all' else None
+        )
+        
+        try:
+            db.session.add(new_coupon)
+            db.session.commit()
+            flash(f'Kupon tanımlandı: {code_input}', category='success')
+            return redirect('/manage-coupons')
+        except Exception as e:
+            print(e)
+            flash('Kupon oluşturulurken hata (Kod benzersiz olmalı).', category='error')
+    
+    # Pre-select customer if passed in args
+    selected_customer_id = request.args.get('customer_id')
+    return render_template('admin_template/define_coupon.html', customers=customers, selected=selected_customer_id)
+
+
+@admin.route('/delete-coupon/<int:id>')
+@login_required
+def delete_coupon(id):
+    if current_user.id == 1:
+        coupon = Coupon.query.get(id)
+        db.session.delete(coupon)
+        db.session.commit()
+        flash('Kupon silindi.')
+        return redirect('/manage-coupons')
+    return render_template('404.html')
 
 
 @admin.route('/add-shop-items', methods=['GET', 'POST'])

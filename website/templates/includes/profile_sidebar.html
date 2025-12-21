@@ -1,0 +1,42 @@
+<div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+            {% set navigation = [
+            ('/profile/' ~ current_user.id, 'fa-solid fa-user', 'Profil Bilgilerim'),
+            ('/orders', 'fa-solid fa-box-open', 'Siparişlerim'),
+            ('/address-book', 'fa-solid fa-address-book', 'Adres Defteri'),
+            ('/saved-cards', 'fa-solid fa-credit-card', 'Kayıtlı Kartlarım'),
+            ('/my-coupons', 'fa-solid fa-tags', 'Kuponlarım'),
+            ('/change-email', 'fa-regular fa-envelope', 'E-Posta Değiştir'),
+            ('/change-phone', 'fa-solid fa-phone', 'Telefon Değiştir'),
+            ('/change-password', 'fa-solid fa-lock', 'Şifre Değiştir')
+            ] %}
+
+            {% for href, icon, label in navigation %}
+            {% set is_active = request.path == href %}
+            <a href="{{ href }}" class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3
+                          {% if is_active %} fw-bold text-primary bg-light {% else %} text-dark {% endif %}">
+                <i class="{{ icon }} {% if is_active %} text-primary {% else %} text-secondary {% endif %}"></i>
+                {{ label }}
+            </a>
+            {% endfor %}
+
+            <a href="/logout"
+                class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3 text-danger">
+                <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Smooth hover effect */
+    .list-group-item-action {
+        transition: all 0.2s ease;
+    }
+
+    .list-group-item-action:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+    }
+</style>

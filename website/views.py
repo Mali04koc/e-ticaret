@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, flash, redirect, request, jsonify
-from .models import Product, Cart, Order, Address, Card
+from .models import Product, Cart, Order, Address, Card, Coupon
 from flask_login import login_required, current_user
 from . import db
 from intasend import APIService
@@ -198,6 +198,56 @@ def place_order():
         return redirect('/')
 
 
+@views.route('/apply-coupon', methods=['POST'])
+@login_required
+def apply_coupon():
+    code = request.form.get('code')
+    if not code:
+        flash('Kupon kodu girilmedi.', category='error')
+        return redirect('/checkout')
+        
+    coupon = Coupon.query.filter_by(code=code).first()
+    
+    if not coupon:
+        flash('Geçersiz kupon kodu.', category='error')
+        return redirect('/checkout')
+        
+    if not coupon.is_active:
+        flash('Bu kupon artık geçerli değil.', category='error')
+        return redirect('/checkout')
+        
+    # Check Target
+    if coupon.target_customer_id and coupon.target_customer_id != current_user.id:
+        flash('Bu kupon size özel değil.', category='error')
+        return redirect('/checkout')
+        
+    # Calculate Discount
+    cart = Cart.query.filter_by(customer_link=current_user.id).all()
+    subtotal = sum(item.product.current_price * item.quantity for item in cart)
+    
+    discount = 0
+    if coupon.is_percentage:
+        discount = (subtotal * coupon.discount_value) / 100
+    else:
+        discount = coupon.discount_value
+        
+    # Store in session
+    session['coupon_code'] = coupon.code
+    session['discount_amount'] = discount
+    flash(f'Kupon uygulandı! {discount} TL indirim.', category='success')
+    
+    return redirect('/checkout')
+
+
+@views.route('/remove-coupon')
+@login_required
+def remove_coupon():
+    session.pop('coupon_code', None)
+    session.pop('discount_amount', None)
+    flash('Kupon kaldırıldı.', category='info')
+    return redirect('/checkout')
+
+
 @views.route('/checkout')
 @login_required
 def checkout():
@@ -214,6 +264,15 @@ def checkout():
         amount += item.product.current_price * item.quantity
     
     total_price = amount + 200 # Shipping cost
+    
+    # Apply Discount if Coupon exists in session
+    discount_amount = 0
+    if 'coupon_code' in session:
+        discount_amount = session.get('discount_amount', 0)
+        total_price -= discount_amount
+        
+    if total_price < 0:
+        total_price = 0
     
     return render_template('checkout.html', cart=cart, addresses=addresses, saved_cards=saved_cards, total_price=total_price)
 

@@ -21,44 +21,7 @@
 
         <!-- SIDEBAR -->
         <div class="col-lg-3">
-            <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        <a href="/profile/{{ current_user.id }}"
-                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
-                            <i class="fa-solid fa-user"></i> Profil Bilgilerim
-                        </a>
-                        <a href="/orders"
-                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
-                            <i class="fa-solid fa-box-open"></i> Siparişlerim
-                        </a>
-                        <a href="/address-book"
-                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
-                            <i class="fa-solid fa-address-book"></i> Adres Defteri
-                        </a>
-                        <a href="/saved-cards"
-                            class="list-group-item list-group-item-action active border-0 py-3 px-4 d-flex align-items-center gap-3">
-                            <i class="fa-solid fa-credit-card"></i> Kayıtlı Kartlarım
-                        </a>
-                        <a href="/change-email"
-                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
-                            <i class="fa-regular fa-envelope"></i> E-Posta Değiştir
-                        </a>
-                        <a href="/change-phone"
-                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
-                            <i class="fa-solid fa-phone"></i> Telefon Değiştir
-                        </a>
-                        <a href="/change-password"
-                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3">
-                            <i class="fa-solid fa-lock"></i> Şifre Değiştir
-                        </a>
-                        <a href="/logout"
-                            class="list-group-item list-group-item-action border-0 py-3 px-4 d-flex align-items-center gap-3 text-danger">
-                            <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
-                        </a>
-                    </div>
-                </div>
-            </div>
+            {% include 'includes/profile_sidebar.html' %}
         </div>
 
         <!-- MAIN CONTENT -->

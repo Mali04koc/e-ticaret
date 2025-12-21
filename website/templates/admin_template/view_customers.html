@@ -1,0 +1,63 @@
+{% extends 'admin_template/admin_base.html' %}
+
+{% block title %} Müşterileri Görüntüle {% endblock %}
+
+{% block body %}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Müşteri Yönetimi</h1>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col"># ID</th>
+                        <th scope="col">Ad Soyad</th>
+                        <th scope="col">E-Posta</th>
+                        <th scope="col">Telefon</th>
+                        <th scope="col">Kayıt Tarihi</th>
+                        <th scope="col">Durum</th>
+                        <th scope="col">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td><strong>{{ customer.id }}</strong></td>
+                        <td>{{ customer.first_name }} {{ customer.last_name }}</td>
+                        <td>{{ customer.email }}</td>
+                        <td>{{ customer.phone }}</td>
+                        <td>{{ customer.date_joined.strftime('%d-%m-%Y') }}</td>
+                        <td>
+                            {% if customer.is_banned %}
+                            <span class="badge bg-danger">Pasif / Yasaklı</span>
+                            {% else %}
+                            <span class="badge bg-success">Aktif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/toggle-ban/{{ customer.id }}"
+                                class="btn btn-sm {% if customer.is_banned %}btn-outline-success{% else %}btn-outline-danger{% endif %}">
+                                {% if customer.is_banned %}
+                                <i class="fa-solid fa-unlock"></i> Yasağı Kaldır
+                                {% else %}
+                                <i class="fa-solid fa-ban"></i> Yasakla
+                                {% endif %}
+                            </a>
+                            <a href="/define-coupon?customer_id={{ customer.id }}"
+                                class="btn btn-sm btn-outline-primary ms-1">
+                                <i class="fa-solid fa-ticket"></i> Kupon
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
