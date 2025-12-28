@@ -21,25 +21,39 @@
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
         {% for item in items %}
         <div class="col">
-            <div class="product-card h-100 position-relative bg-white p-3 border rounded-3 shadow-sm">
-                <button class="btn btn-sm position-absolute top-0 end-0 mt-2 me-2 text-muted z-1">
-                    <i class="fa-regular fa-heart"></i>
-                </button>
+            <div class="product-card h-100 position-relative bg-white p-3 border rounded-3 shadow-sm"
+                style="{% if not item.is_active %}opacity: 0.6; filter: grayscale(100%);{% endif %}">
+                <!-- Wishlist Icon -->
+                <a href="/toggle-favorite/{{ item.id }}"
+                    class="btn btn-sm position-absolute top-0 end-0 mt-2 me-2 z-1 border-0">
+                    {% if user_favorites and item.id in user_favorites %}
+                    <i class="fa-solid fa-heart text-danger fa-lg"></i>
+                    {% else %}
+                    <i class="fa-regular fa-heart text-muted fa-lg"></i>
+                    {% endif %}
+                </a>
+
+                <!-- Image -->
                 <div class="text-center mb-3 d-flex align-items-center justify-content-center" style="height: 200px;">
                     <img src="{{ item.product_picture }}" alt="{{ item.product_name }}" class="img-fluid"
                         style="max-height: 100%; max-width: 100%; object-fit: contain;">
                 </div>
+
+                <!-- Details -->
                 <div class="product-info">
                     <h6 class="text-truncate mb-2 fw-semibold text-dark" title="{{ item.product_name }}">{{
                         item.product_name }}</h6>
+
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <div class="text-warning small">
-                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-                                class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-                                class="fa-regular fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-regular fa-star"></i>
                         </div>
-                        <span class="text-muted small">(12)</span>
                     </div>
+
                     <div class="d-flex justify-content-between align-items-end">
                         <div>
                             <h5 class="fw-bold mb-0 text-dark">₺{{ item.current_price }}</h5>
@@ -47,11 +61,16 @@
                             <div class="text-muted small text-decoration-line-through">₺{{ item.previous_price }}</div>
                             {% endif %}
                         </div>
-                        <a href="/add-to-cart/{{ item.id }}"
-                            class="btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center"
-                            style="width: 35px; height: 35px;">
-                            <i class="fa-solid fa-plus text-white"></i>
+                        <!-- Add to Cart -->
+                        {% if item.is_active %}
+                        <a href="/add-to-cart/{{ item.id }}" class="btn btn-primary btn-sm">
+                            Sepete Ekle
                         </a>
+                        {% else %}
+                        <button class="btn btn-secondary btn-sm" disabled>
+                            Stokta Yok
+                        </button>
+                        {% endif %}
                     </div>
                     {% if item.flash_sale %}
                     <span class="position-absolute top-0 start-0 badge bg-danger m-2">{{ item.flash_sale }}</span>

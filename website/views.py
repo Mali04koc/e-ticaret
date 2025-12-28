@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, flash, redirect, request, jsonify
-from .models import Product, Cart, Order, Address, Card, Coupon
+from .models import Product, Cart, Order, Address, Card, Coupon, Favorite
 from flask_login import login_required, current_user
 from . import db
 from intasend import APIService
@@ -13,6 +13,54 @@ views = Blueprint('views', __name__)
 
 API_PUBLISHABLE_KEY = os.getenv('INTASEND_PUBLISHABLE_KEY')
 API_TOKEN = os.getenv('INTASEND_API_TOKEN')
+
+
+@views.context_processor
+def inject_favorites():
+    if current_user.is_authenticated:
+        favorites = Favorite.query.filter_by(customer_link=current_user.id).all()
+        fav_ids = [fav.product_link for fav in favorites]
+        return dict(user_favorites=fav_ids)
+    return dict(user_favorites=[])
+
+
+@views.route('/favorites')
+@login_required
+def favorites():
+    user_favorites = Favorite.query.filter_by(customer_link=current_user.id).all()
+    # We need to get the actual product objects.
+    # Assuming Favorite has product_link which is the ID.
+    # Better to join or just query Products where id in list.
+    fav_product_ids = [f.product_link for f in user_favorites]
+    if fav_product_ids:
+        products = Product.query.filter(Product.id.in_(fav_product_ids)).all()
+    else:
+        products = []
+        
+    return render_template('favs.html', items=products)
+
+
+@views.route('/toggle-favorite/<int:item_id>')
+@login_required
+def toggle_favorite(item_id):
+    product = Product.query.get(item_id)
+    if not product:
+        flash('Ürün bulunamadı.', category='error')
+        return redirect(request.referrer)
+
+    existing_fav = Favorite.query.filter_by(customer_link=current_user.id, product_link=item_id).first()
+    
+    if existing_fav:
+        db.session.delete(existing_fav)
+        db.session.commit()
+        flash(f'{product.product_name} favorilerden çıkarıldı.', category='info')
+    else:
+        new_fav = Favorite(customer_link=current_user.id, product_link=item_id)
+        db.session.add(new_fav)
+        db.session.commit()
+        flash(f'{product.product_name} favorilere eklendi.', category='success')
+    
+    return redirect(request.referrer)
 
 
 @views.route('/')
@@ -37,6 +85,10 @@ def home():
 @login_required
 def add_to_cart(item_id):
     item_to_add = Product.query.get(item_id)
+    if not item_to_add or not item_to_add.is_active:
+        flash('Bu ürün şu anda temin edilemiyor.', category='error')
+        return redirect(request.referrer)
+        
     item_exists = Cart.query.filter_by(product_link=item_id, customer_link=current_user.id).first()
     if item_exists:
         try:
@@ -160,6 +212,9 @@ def place_order():
         try:
             total = 0
             for item in customer_cart:
+                if not item.product.is_active:
+                    flash(f"'{item.product.product_name}' şu anda temin edilemiyor. Lütfen sepetinizden çıkarın.", category='error')
+                    return redirect('/cart')
                 total += item.product.current_price * item.quantity
 
             service = APIService(token=API_TOKEN, publishable_key=API_PUBLISHABLE_KEY, test=True)
@@ -363,6 +418,12 @@ def process_payment():
 
     # If payment successful:
     customer_cart = Cart.query.filter_by(customer_link=current_user.id).all()
+
+    # Check for inactive products before processing
+    for item in customer_cart:
+        if not item.product.is_active:
+            flash(f"'{item.product.product_name}' şu anda temin edilemiyor. Lütfen sepetinizden çıkarın.", category='error')
+            return redirect('/cart')
     
     try:
         payment_id = f"PAY-{current_user.id}-{int(datetime.now().timestamp())}"
@@ -443,6 +504,33 @@ def get_category(name):
          return render_template('category_template/beauty.html', items=items, cart=user_cart)
     elif name == 'sports_outdoor':
          return render_template('category_template/sports_outdoor.html', items=items, cart=user_cart)
+    
+    elif name == 'most_sellers':
+        # Logic for best sellers: Count quantity of products in orders with specific status
+        from sqlalchemy import func, desc
+        # Assuming 'Teslim Edildi' or similar is the success status. 
+        # If 'Teslim Edildi' is strictly required: .filter(Order.status == 'Teslim Edildi')
+        # However, for broader display we might initially include confirmed orders too.
+        # User explicitly asked for "Teslim Edildi":
+        ranked_products = db.session.query(
+            Product, func.sum(Order.quantity).label('total_sold')
+        ).join(Order, Order.product_link == Product.id)\
+         .filter(Order.status == 'Teslim Edildi')\
+         .group_by(Product)\
+         .order_by(desc('total_sold')).all()
+         
+        # ranked_products is a list of tuples (Product, total_sold)
+        # We just need the product objects, maybe with rank info attached or just ordered list
+        items = [p[0] for p in ranked_products]
+        return render_template('category_template/most_sellers.html', items=items, cart=user_cart)
+
+    elif name == 'sales':
+        # Logic for sales: Sort by discount percentage descending
+        all_products = Product.query.filter(Product.previous_price > Product.current_price).all()
+        # Calculate discount % and sort
+        # Discount = (prev - curr) / prev
+        items = sorted(all_products, key=lambda p: (p.previous_price - p.current_price) / p.previous_price, reverse=True)
+        return render_template('category_template/sales.html', items=items, cart=user_cart)
     
     # Fallback to electronics or generic if needed, or 404
     return render_template('category_template/electronics.html', items=items, cart=user_cart)

@@ -9,12 +9,11 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.min.js"></script>
 
 
-  <script src="https://kit.fontawesome.com/e24507d923.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" />
-
-
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
@@ -35,11 +34,16 @@
         </button>
         <a class="navbar-brand d-flex align-items-center gap-2" href="/" style="margin-right: 20px;">
           <div class="brand-icon">
-            <i class="fa-brands fa-wind fa-lg text-primary"></i>
+            <img src="{{ url_for('static', filename='images/wind.png') }}" alt="Wind Logo"
+              style="width: 30px; height: 30px;">
           </div>
           <span class="brand-text fw-bold" style="color: #333; font-size: 24px;">Wind</span>
         </a>
-        <a class="nav-link text-muted d-none d-md-block" href="#" style="font-size: 14px;">Bize Ulaşın</a>
+        <a class="nav-link text-muted d-none d-md-block"
+          href="https://wa.me/905427282857?text=Merhaba,%20bilgi%20almak%20istiyorum." target="_blank"
+          style="font-size: 14px;">
+          <i class="fa-brands fa-whatsapp text-success me-1"></i> Bize Ulaşın
+        </a>
       </div>
 
       <!-- Center: Search Bar -->
@@ -50,7 +54,7 @@
               placeholder="Ürün, kategori veya marka ara..." aria-label="Search" style="border-color: #e0e0e0;">
             <button class="btn btn-warning text-white px-4 fw-bold" type="submit"
               style="background-color: #ff9900; border-color: #ff9900;">
-              <i class="fa-solid fa-magnifying-glass"></i>
+              Ara
             </button>
           </div>
         </form>
@@ -63,7 +67,7 @@
         <div class="nav-item mx-2">
           <a class="nav-link position-relative text-dark d-flex flex-column align-items-center" href="/cart">
             <div class="icon-wrapper">
-              <i class="fa-solid fa-cart-shopping fs-5"></i>
+              <!-- Cart icon removed/replaced with text if needed, keeping text below -->
               {% if cart | length > 0 %}
               <span
                 class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light"
@@ -78,8 +82,7 @@
 
         <!-- Favorites -->
         <div class="nav-item mx-2 d-none d-sm-block">
-          <a class="nav-link text-dark d-flex flex-column align-items-center" href="#">
-            <i class="fa-regular fa-heart fs-5"></i>
+          <a class="nav-link text-dark d-flex flex-column align-items-center" href="/favorites">
             <span class="d-none d-lg-block small mt-1">Favoriler</span>
           </a>
         </div>
@@ -88,7 +91,6 @@
         <div class="nav-item dropdown mx-2">
           <a class="nav-link dropdown-toggle text-dark d-flex flex-column align-items-center" href="#" role="button"
             id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fa-regular fa-user fs-5"></i>
             <span class="d-none d-lg-block small mt-1">Hesap</span>
           </a>
           <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="profileDropdown">
@@ -98,7 +100,7 @@
             </li>
             <li><a class="dropdown-item" href="/profile/{{ current_user.id }}"><i
                   class="fa-solid fa-id-card me-2 text-muted"></i> Profil</a></li>
-              <hr class="dropdown-divider">
+            <hr class="dropdown-divider">
             </li>
             <li><a class="dropdown-item text-danger" href="/logout"><i class="fa-solid fa-right-from-bracket me-2"></i>
                 Çıkış Yap</a></li>

@@ -42,6 +42,7 @@ class Product(db.Model):
     product_picture = db.Column(db.String(1000), nullable=False)
     flash_sale = db.Column(db.String(100)) # Stores discount percentage text e.g. "%20 İndirim"
     category = db.Column(db.String(100)) # Stores product category
+    is_active = db.Column(db.Boolean, default=True) # Soft delete flag
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
 
     carts = db.relationship('Cart', backref=db.backref('product', lazy=True))
@@ -117,6 +118,15 @@ class Coupon(db.Model):
 
     def __str__(self):
         return '<Coupon %r>' % self.code
+
+
+class Favorite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    customer_link = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
+    product_link = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+
+    def __str__(self):
+        return '<Favorite %r>' % self.id
 
 
 

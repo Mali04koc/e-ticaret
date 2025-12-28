@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- tarayıcının en güncel dökümanını kullanır -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLICK-GİRİŞ </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/giris.css') }}">
+
+</head>
+
+<body>
+
+    <section>
+        <div class="login-box">
+            <!-- Flash Messages (Absolute Positioned) -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div style="position: absolute; top: 10px; width: 90%; z-index: 10;">
+                {% for category, message in messages %}
+                <div
+                    style="width: 100%; text-align: center; padding: 10px; border-radius: 10px; font-size: 0.85em; color: white; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                            background-color: {% if category == 'error' %}rgba(220, 53, 69, 0.9){% else %}rgba(25, 135, 84, 0.9){% endif %};">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <h2>GİRİŞ</h2>
+                <div class="input-box">
+                    <span class="icon"><ion-icon name="mail"></ion-icon></span>
+                    <!-- Backend expects identifier (email or phone) -->
+                    {{ form.identifier(placeholder="Telefon Numarası Veya Email", required=True) }}
+                    <label>Telefon Numarası Veya Email Giriniz</label>
+                </div>
+                <div class="input-box">
+                    <span class="icon"> <ion-icon name="lock-closed"></ion-icon></span>
+                    {{ form.password(placeholder="Şifre", required=True) }}
+                    <label>Şifre Giriniz</label>
+                </div>
+
+                <div class="remember-forget">
+                    <a href="{{ url_for('auth.forgot_password') }}">Şifremi Unuttum?</a>
+                </div>
+                <button type="submit">Giriş</button>
+                <div class="register-link">
+                    <p>Hesabın Yok Mu? <a href="{{ url_for('auth.sign_up') }}">Kayıt Ol</a></p>
+                </div>
+            </form>
+        </div>
+
+    </section>
+
+
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+</body>
+
+
+</html>

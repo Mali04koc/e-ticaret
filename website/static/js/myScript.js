@@ -2,7 +2,7 @@ $('.plus-cart').click(function () {
     console.log('Button clicked')
 
     var id = $(this).attr('pid').toString()
-    var quantity = this.parentNode.children[2]
+    // var quantity = this.parentNode.children[2] // This was selecting the button (index 2) resulting in overwrite!
 
     $.ajax({
         type: 'GET',
@@ -13,7 +13,7 @@ $('.plus-cart').click(function () {
 
         success: function (data) {
             console.log(data)
-            quantity.innerText = data.quantity
+            // quantity.innerText = data.quantity // FIX: Don't use the wrong selector
             document.getElementById(`quantity${id}`).innerText = data.quantity
             document.getElementById('amount_tt').innerText = data.amount
             document.getElementById('totalamount').innerText = data.total
@@ -27,7 +27,7 @@ $('.minus-cart').click(function () {
     console.log('Button clicked')
 
     var id = $(this).attr('pid').toString()
-    var quantity = this.parentNode.children[2]
+    // var quantity = this.parentNode.children[2] // Incorrect selector (Index 2 is plus button!)
 
     var currentQuantity = parseInt(document.getElementById(`quantity${id}`).innerText);
 
@@ -41,7 +41,7 @@ $('.minus-cart').click(function () {
 
             success: function (data) {
                 console.log(data)
-                quantity.innerText = data.quantity
+                // quantity.innerText = data.quantity 
                 document.getElementById(`quantity${id}`).innerText = data.quantity
                 document.getElementById('amount_tt').innerText = data.amount
                 document.getElementById('totalamount').innerText = data.total

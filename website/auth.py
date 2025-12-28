@@ -1,5 +1,11 @@
 # kimlik doğrulama
-from flask import Blueprint, render_template, flash, redirect, request
+from flask import Blueprint, render_template, flash, redirect, request, session, url_for
+import random
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 from .forms import LoginForm, SignUpForm, PasswordChangeForm, AddressForm, ChangeEmailForm, ChangePhoneForm
 from .models import Customer, Address, Card, Coupon
 from . import db
@@ -26,18 +32,18 @@ def sign_up():
         
         if not is_valid:
             flash(error_message)
-            return render_template('signup.html', form=form)
+            return render_template('login_template/signup.html', form=form)
 
         # Check for existing user with same email or phone
         user_by_email = Customer.query.filter_by(email=email).first()
         if user_by_email:
             flash('Bu email adresi ile daha önce kayıt olunmuş.', category='error')
-            return render_template('signup.html', form=form)
+            return render_template('login_template/signup.html', form=form)
         
         user_by_phone = Customer.query.filter_by(phone=phone).first()
         if user_by_phone:
             flash('Bu telefon numarası ile daha önce kayıt olunmuş.', category='error')
-            return render_template('signup.html', form=form)
+            return render_template('login_template/signup.html', form=form)
 
         # If validations pass, proceed to check DB uniqueness and create user
         new_customer = Customer()
@@ -56,7 +62,7 @@ def sign_up():
             print(e)
             flash('Bir hata oluştu, lütfen tekrar deneyin.', category='error')
 
-    return render_template('signup.html', form=form)
+    return render_template('login_template/signup.html', form=form)
 
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -73,7 +79,7 @@ def login():
             if customer.verify_password(password=password):
                 if customer.is_banned:
                     flash('Hesabınız erişime kapatılmıştır. Yönetici ile iletişime geçin.', category='error')
-                    return render_template('login.html', form=form)
+                    return render_template('login_template/login.html', form=form)
                 
                 login_user(customer)
                 if customer.id == 1:
@@ -85,7 +91,7 @@ def login():
         else:
             flash('Böyle bir kullanıcı bulunamadı.Kayıt olun.', category='error')
 
-    return render_template('login.html', form=form)
+    return render_template('login_template/login.html', form=form)
 
 
 @auth.route('/logout', methods=['GET', 'POST'])
@@ -266,6 +272,110 @@ def delete_card(id):
         flash('Kart bulunamadı veya işlem yetkiniz yok.', category='error')
         
     return redirect('/saved-cards')
+
+
+@auth.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        customer = Customer.query.filter_by(email=email).first()
+        
+        if customer:
+            # Generate code
+            code = str(random.randint(100000, 999999))
+            session['reset_code'] = code
+            session['reset_email'] = email
+            
+            # Send Email (Brevo)
+            url = "https://api.brevo.com/v3/smtp/email"
+            api_key = os.getenv('BREVO_API_KEY')
+            sender_email = os.getenv('BREVO_SENDER_EMAIL')
+            sender_name = os.getenv('BREVO_SENDER_NAME')
+            
+            payload = {
+                "sender": {
+                    "name": sender_name,
+                    "email": sender_email
+                },
+                "to": [
+                    {
+                        "email": email,
+                        "name": f"{customer.first_name} {customer.last_name}"
+                    }
+                ],
+                "subject": "Şifre Sıfırlama Kodu",
+                "htmlContent": f"<html><body><h1>Şifre Sıfırlama Kodunuz: {code}</h1><p>Bu kodu kullanarak şifrenizi sıfırlayabilirsiniz.</p></body></html>"
+            }
+            
+            headers = {
+                "accept": "application/json",
+                "api-key": api_key,
+                "content-type": "application/json"
+            }
+            
+            try:
+                response = requests.post(url, json=payload, headers=headers)
+                if response.status_code == 201:
+                    flash('Doğrulama kodu e-posta adresinize gönderildi.', category='success')
+                    return redirect(url_for('auth.verify_reset_code'))
+                else:
+                    print(f"Brevo Error: {response.text}")
+                    flash('E-posta gönderilemedi. Lütfen tekrar deneyin.', category='error')
+            except Exception as e:
+                print(f"Error: {e}")
+                flash('Sistem hatası oluştu.', category='error')
+        else:
+            flash('Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.', category='error')
+            
+    return render_template('login_template/forget.html')
+
+
+@auth.route('/verify-reset-code', methods=['GET', 'POST'])
+def verify_reset_code():
+    if 'reset_email' not in session:
+        return redirect(url_for('auth.forgot_password'))
+        
+    if request.method == 'POST':
+        code = request.form.get('code')
+        if code == session.get('reset_code'):
+            session['reset_verified'] = True
+            flash('Kod doğrulandı. Yeni şifrenizi belirleyin.', category='success')
+            return redirect(url_for('auth.reset_new_password'))
+        else:
+            flash('Hatalı doğrulama kodu.', category='error')
+            
+    return render_template('login_template/verify_reset_code.html')
+
+
+@auth.route('/reset-new-password', methods=['GET', 'POST'])
+def reset_new_password():
+    if 'reset_email' not in session or not session.get('reset_verified'):
+        return redirect(url_for('auth.forgot_password'))
+        
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if password == confirm_password:
+            email = session.get('reset_email')
+            customer = Customer.query.filter_by(email=email).first()
+            if customer:
+                customer.password = password
+                db.session.commit()
+                
+                # Clear session
+                session.pop('reset_email', None)
+                session.pop('reset_code', None)
+                session.pop('reset_verified', None)
+                
+                flash('Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz.', category='success')
+                return redirect(url_for('auth.login'))
+            else:
+                flash('Kullanıcı bulunamadı.', category='error')
+        else:
+            flash('Şifreler eşleşmiyor.', category='error')
+            
+    return render_template('login_template/reset_new_password.html')
 
 
 

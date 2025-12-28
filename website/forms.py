@@ -1,7 +1,7 @@
 #formsları kontrol edicek login
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, FloatField, PasswordField, EmailField, BooleanField, SubmitField, SelectField
-from wtforms.validators import DataRequired, length, NumberRange
+from wtforms.validators import DataRequired, length, NumberRange, Optional
 from flask_wtf.file import FileField, FileRequired
 
 
@@ -41,7 +41,7 @@ class ShopItemsForm(FlaskForm):
         ('sports_outdoor', 'Spor & Outdoor')
     ], validators=[DataRequired()])
     current_price = FloatField('Current Price', validators=[DataRequired()])
-    previous_price = FloatField('Previous Price', validators=[DataRequired()])
+    previous_price = FloatField('Previous Price', validators=[Optional()])
     in_stock = IntegerField('In Stock', validators=[DataRequired(), NumberRange(min=0)])
     product_picture = FileField('Product Picture', validators=[DataRequired()])
 
@@ -82,8 +82,3 @@ class ChangePhoneForm(FlaskForm):
     new_phone = StringField('Yeni Telefon Numarası', validators=[DataRequired()])
     password = PasswordField('Şifre', validators=[DataRequired()])
     submit = SubmitField('Telefon Numarası Güncelle')
-
-
-
-
-

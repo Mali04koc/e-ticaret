@@ -22,9 +22,11 @@
     <nav class="navbar navbar-light bg-white sticky-top shadow-sm py-3 border-bottom">
         <div class="container-fluid px-4">
             <!-- Logo -->
-            <a class="navbar-brand d-flex align-items-center gap-2" href="/" style="margin-right: 20px;">
+            <!-- Logo -->
+            <a class="navbar-brand d-flex align-items-center gap-2" href="/admin-page" style="margin-right: 20px;">
                 <div class="brand-icon">
-                    <i class="fa-brands fa-wind fa-lg text-primary"></i>
+                    <img src="{{ url_for('static', filename='images/wind.png') }}" alt="Wind Logo"
+                        style="width: 30px; height: 30px;">
                 </div>
                 <span class="brand-text fw-bold" style="color: #333; font-size: 24px;">Wind</span>
                 <span class="badge bg-primary ms-2" style="font-size: 0.7em;">ADMIN</span>
@@ -33,7 +35,7 @@
             <!-- Right Side: Logout only -->
             <div class="d-flex align-items-center">
                 <a href="/logout" class="btn btn-outline-danger btn-sm">
-                    <i class="fa-solid fa-right-from-bracket me-2"></i> Çıkış Yap
+                    Çıkış Yap
                 </a>
             </div>
         </div>
@@ -45,10 +47,7 @@
             <!-- Sidebar -->
             <div class="col-md-3 col-lg-2 d-md-block bg-white sidebar border-end collapse pt-3" id="sidebarMenu">
                 <div class="list-group list-group-flush">
-                    <a href="/admin-page"
-                        class="list-group-item list-group-item-action fw-semibold border-0 rounded my-1 {% if request.path == '/admin-page' %}active bg-primary text-white{% endif %}">
-                        <i class="fa-solid fa-gauge me-2"></i> Kontrol Paneli
-                    </a>
+
 
                     <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase"
                         style="font-size: 0.75rem;">
@@ -56,10 +55,15 @@
                     </h6>
                     <a href="/add-shop-items"
                         class="list-group-item list-group-item-action border-0 rounded my-1 text-dark {% if request.path == '/add-shop-items' %}bg-light text-primary fw-bold{% endif %}">
-                        <i class="fa-solid fa-plus me-2 text-secondary"></i> Ürün Ekle
+                        Ürün Ekle
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action border-0 rounded my-1 text-dark">
-                        <i class="fa-solid fa-ranking-star me-2 text-secondary"></i> Çok Satanlar
+                    <a href="/update-products-list"
+                        class="list-group-item list-group-item-action border-0 rounded my-1 text-dark {% if request.path == '/update-products-list' %}bg-light text-primary fw-bold{% endif %}">
+                        Ürün Güncelle
+                    </a>
+                    <a href="/most-sellers"
+                        class="list-group-item list-group-item-action border-0 rounded my-1 text-dark {% if request.path == '/most-sellers' %}bg-light text-primary fw-bold{% endif %}">
+                        Çok Satanlar
                     </a>
 
                     <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase"
@@ -67,19 +71,23 @@
                         <span>Satış & Müşteri</span>
                     </h6>
                     <a href="/view-orders"
-                        class="list-group-item list-group-item-action border-0 rounded my-1 text-dark">
-                        <i class="fa-solid fa-check-double me-2 text-secondary"></i> Sipariş Onayı
+                        class="list-group-item list-group-item-action border-0 rounded my-1 text-dark d-flex justify-content-between align-items-center">
+                        Sipariş Onayı
+                        {% if pending_orders_count > 0 %}
+                        <span class="badge bg-danger rounded-pill">{{ pending_orders_count }}</span>
+                        {% endif %}
                     </a>
                     <a href="/view-customers"
                         class="list-group-item list-group-item-action border-0 rounded my-1 text-dark">
-                        <i class="fa-solid fa-users me-2 text-secondary"></i> Müşteri Görüntüle
+                        Müşteri Görüntüle
                     </a>
                     <a href="/manage-coupons"
                         class="list-group-item list-group-item-action border-0 rounded my-1 text-dark">
-                        <i class="fa-solid fa-ticket me-2 text-secondary"></i> Kupon Yönetimi
+                        Kupon Yönetimi
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action border-0 rounded my-1 text-dark">
-                        <i class="fa-solid fa-envelope me-2 text-secondary"></i> Mesajlar
+                    <a href="/update-products-list"
+                        class="list-group-item list-group-item-action border-0 rounded my-1 text-dark">
+                        Ürün Güncelle
                     </a>
                 </div>
             </div>

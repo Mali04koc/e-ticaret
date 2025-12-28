@@ -12,6 +12,14 @@ import os
 admin = Blueprint('admin', __name__)
 
 
+@admin.context_processor
+def inject_pending_orders_count():
+    if current_user.is_authenticated and current_user.id == 1:
+        pending_count = Order.query.filter_by(status='Onaylanmayı Bekliyor').count()
+        return dict(pending_orders_count=pending_count)
+    return dict(pending_orders_count=0)
+
+
 @admin.route('/media/<path:filename>')
 def get_image(filename):
     return send_from_directory('../media', filename)
@@ -133,18 +141,12 @@ def add_shop_items():
         if form.validate_on_submit():
             product_name = form.product_name.data
             current_price = form.current_price.data
-            previous_price = form.previous_price.data
             in_stock = form.in_stock.data
             category = form.category.data
             
-            # Auto-calculate Flash Sale Discount
+            # For new items, previous_price is same as current (no discount initially)
+            previous_price = current_price
             flash_sale = None
-            if current_price < previous_price:
-                try:
-                    discount = ((previous_price - current_price) / previous_price) * 100
-                    flash_sale = f"%{int(discount)} İndirim"
-                except ZeroDivisionError:
-                    pass
 
             file = form.product_picture.data
             file_name = secure_filename(file.filename)
@@ -190,8 +192,65 @@ def add_shop_items():
 @login_required
 def shop_items():
     if current_user.id == 1:
-        items = Product.query.order_by(Product.date_added).all()
+        items = Product.query.order_by(Product.date_added.desc()).all()
         return render_template('shop_items.html', items=items)
+    return render_template('404.html')
+
+
+@admin.route('/update-products-list')
+@login_required
+def update_products_list():
+    if current_user.id == 1:
+        items = Product.query.order_by(Product.date_added.desc()).all()
+        return render_template('admin_template/update_products_list.html', items=items)
+    return render_template('404.html')
+
+
+@admin.route('/update-product-price/<int:item_id>', methods=['POST'])
+@login_required
+def update_product_price(item_id):
+    if current_user.id == 1:
+        new_price = request.form.get('new_price')
+        new_stock = request.form.get('new_stock')
+        
+        if new_price:
+            try:
+                new_price = float(new_price)
+                if new_stock:
+                    new_stock = int(new_stock)
+                
+                if new_price < 0 or (new_stock is not None and new_stock < 0):
+                    flash('Fiyat ve stok 0 dan küçük olamaz.', category='error')
+                    return redirect('/update-products-list')
+                
+                product = Product.query.get(item_id)
+                if product:
+                    # Logic: New Price -> Current Price, Old Current -> Previous Price
+                    # Only if changed
+                    if new_price != product.current_price:
+                        product.previous_price = product.current_price
+                        product.current_price = new_price
+                        
+                        # Calculate Discount
+                        if product.current_price < product.previous_price:
+                            discount = ((product.previous_price - product.current_price) / product.previous_price) * 100
+                            product.flash_sale = f"%{int(discount)} İndirim"
+                        else:
+                            product.flash_sale = None
+                    
+                    if new_stock is not None:
+                        product.in_stock = new_stock
+                        
+                    db.session.commit()
+                    flash(f'{product.product_name} güncellendi.', category='success')
+                    
+            except ValueError:
+                flash('Geçersiz fiyat veya stok değeri.', category='error')
+            except Exception as e:
+                print(e)
+                flash('Güncelleme hatası.', category='error')
+                
+        return redirect('/update-products-list')
     return render_template('404.html')
 
 
@@ -249,13 +308,21 @@ def delete_item(item_id):
     if current_user.id == 1:
         try:
             item_to_delete = Product.query.get(item_id)
-            db.session.delete(item_to_delete)
+            # Soft Delete / Toggle Status
+            item_to_delete.is_active = not item_to_delete.is_active
             db.session.commit()
-            flash('One Item deleted')
+            
+            status_text = "Pasife alındı" if not item_to_delete.is_active else "Aktif edildi"
+            flash(f'Ürün durumu güncellendi: {status_text}', category='success')
+            
+            # Check referrer to redirect back to the correct page
+            if 'update-products-list' in request.referrer:
+                return redirect('/update-products-list')
             return redirect('/shop-items')
+            
         except Exception as e:
-            print('Item not deleted', e)
-            flash('Item not deleted!!')
+            print('Item update failed', e)
+            flash('İşlem başarısız!!')
         return redirect('/shop-items')
 
     return render_template('404.html')
@@ -275,24 +342,61 @@ def order_view():
 def update_order(order_id):
     if current_user.id == 1:
         form = OrderForm()
-
         order = Order.query.get(order_id)
 
         if form.validate_on_submit():
-            status = form.order_status.data
-            order.status = status
+            new_status = form.order_status.data
+            
+            # Stock Reduction Logic
+            if new_status == 'Teslim Edildi' and order.status != 'Teslim Edildi':
+                product = Product.query.get(order.product_link)
+                if product:
+                    product.in_stock -= order.quantity
+                    if product.in_stock < 0:
+                        product.in_stock = 0
+                    flash(f'Stok güncellendi: {product.product_name} (Yeni Stok: {product.in_stock})', category='info')
+
+            order.status = new_status
 
             try:
                 db.session.commit()
-                flash(f'Order {order_id} Updated successfully')
+                flash(f'Sipariş {order_id} başarıyla güncellendi ({new_status})')
                 return redirect('/view-orders')
             except Exception as e:
                 print(e)
-                flash(f'Order {order_id} not updated')
+                flash(f'Sipariş güncellenemedi: {e}', category='error')
                 return redirect('/view-orders')
 
         return render_template('admin_template/order_update.html', form=form)
 
+    return render_template('404.html')
+
+
+@admin.route('/most-sellers')
+@login_required
+def most_sellers():
+    if current_user.id == 1:
+        from sqlalchemy import func
+        
+        # Query: Sum quantity of users orders where status is 'Teslim Edildi', grouped by product
+        results = db.session.query(
+            Order.product_link, 
+            func.sum(Order.quantity).label('total_sold')
+        ).filter(Order.status == 'Teslim Edildi').group_by(Order.product_link).order_by(func.sum(Order.quantity).desc()).all()
+        
+        # Prepare data for template
+        most_selling_products = []
+        for r in results:
+            product = Product.query.get(r.product_link)
+            if product:
+                most_selling_products.append({
+                    'product': product,
+                    'total_sold': r.total_sold,
+                    # Optional: Calculate total revenue if prices didn't change too much, or stored in order
+                    # For now just showing quantity
+                })
+                
+        return render_template('admin_template/most_sellers.html', products=most_selling_products)
     return render_template('404.html')
 
 

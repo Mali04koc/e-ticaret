@@ -1,0 +1,79 @@
+{% extends 'admin_template/admin_base.html' %}
+
+{% block title %} Ürün Güncelleme {% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Ürün Güncelleme & İndirim</h1>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th scope="col" style="width: 80px;">Görsel</th>
+                        <th scope="col">Ürün Adı</th>
+                        <th scope="col">Mevcut Fiyat</th>
+                        <th scope="col">Stok</th>
+                        <th scope="col">Yeni Fiyat & Stok</th>
+                        <th scope="col">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr class="{% if not item.is_active %}table-secondary text-muted{% endif %}">
+                        <td>
+                            <img src="{{ item.product_picture }}" alt="{{ item.product_name }}" class="rounded"
+                                style="width: 50px; height: 50px; object-fit: cover; {% if not item.is_active %}filter: grayscale(100%); opacity: 0.6;{% endif %}">
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ item.product_name }}</div>
+                            <small class="text-muted">{{ item.category }}</small>
+                            {% if item.flash_sale and item.is_active %}
+                            <span class="badge bg-danger ms-2">{{ item.flash_sale }}</span>
+                            {% endif %}
+                            {% if not item.is_active %}
+                            <span class="badge bg-secondary ms-2">Pasif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="fw-bold">₺{{ item.current_price }}</div>
+                            {% if item.previous_price > item.current_price %}
+                            <small class="text-decoration-line-through text-muted">₺{{ item.previous_price }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.in_stock }}</td>
+                        <td>
+                            <form action="/update-product-price/{{ item.id }}" method="POST" class="d-flex gap-2">
+                                <input type="number" step="0.01" min="0" name="new_price"
+                                    class="form-control form-control-sm" placeholder="Yeni Fiyat"
+                                    value="{{ item.current_price }}" required style="width: 100px;">
+                                <input type="number" min="0" name="new_stock" class="form-control form-control-sm"
+                                    placeholder="Stok" value="{{ item.in_stock }}" style="width: 80px;">
+                                <button type="submit" class="btn btn-primary btn-sm">Güncelle</button>
+                            </form>
+                        </td>
+                        <td>
+                            {% if item.is_active %}
+                            <a href="/delete-item/{{ item.id }}" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Bu ürünü yayından kaldırmak istediğinize emin misiniz? (Pasife alınacak, silinmeyecek)');">
+                                Kaldır
+                            </a>
+                            {% else %}
+                            <a href="/delete-item/{{ item.id }}" class="btn btn-success btn-sm"
+                                onclick="return confirm('Bu ürünü tekrar yayınlamak istediğinize emin misiniz?');">
+                                Yayınla
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
